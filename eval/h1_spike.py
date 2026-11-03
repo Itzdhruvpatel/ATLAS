@@ -69,9 +69,11 @@ def main():
     parser.add_argument("--model", required=True)
     parser.add_argument("--trials", type=int, default=20)
     parser.add_argument("--max-llm-calls", type=int, default=800)
+    parser.add_argument("--timeout", type=float, default=60, help="seconds per LLM call; raise for local CPU models")
     args = parser.parse_args()
 
-    llm = OpenAICompatLLM(args.base_url, os.environ["ATLAS_LLM_API_KEY"], args.model, args.max_llm_calls)
+    # Local servers such as Ollama ignore the key, so it is optional here.
+    llm = OpenAICompatLLM(args.base_url, os.environ.get("ATLAS_LLM_API_KEY", "local"), args.model, args.max_llm_calls, timeout=args.timeout)
     try:
         report = spike(llm, [1, 2, 3], args.trials)
     except BudgetExceeded as e:

@@ -6,7 +6,7 @@ class BudgetExceeded(Exception):
 
 
 class OpenAICompatLLM:
-    def __init__(self, base_url, api_key, model, max_calls, temperature=0.0, transport=None):
+    def __init__(self, base_url, api_key, model, max_calls, temperature=0.0, transport=None, timeout=60):
         self.model = model
         self.max_calls = max_calls
         self.temperature = temperature
@@ -14,7 +14,7 @@ class OpenAICompatLLM:
         self.client = httpx.Client(
             base_url=base_url,
             headers={"Authorization": f"Bearer {api_key}"},
-            timeout=60,
+            timeout=timeout,
             transport=transport,
         )
 
