@@ -14,9 +14,11 @@ class Attribution:
     stage: str | None = None
     leave_one_out: dict = field(default_factory=dict)
     group_survival: float | None = None
+    causing: list = field(default_factory=list)
+    llm_calls: int = 0
 
 
-def untrusted_indexes(messages):
+def untrusted_indexes(messages, untrusted_tools=UNTRUSTED_TOOLS):
     names = {
         call["id"]: call["function"]["name"]
         for m in messages
@@ -24,7 +26,7 @@ def untrusted_indexes(messages):
     }
     return [
         i for i, m in enumerate(messages)
-        if m["role"] == "tool" and names.get(m.get("tool_call_id")) in UNTRUSTED_TOOLS
+        if m["role"] == "tool" and names.get(m.get("tool_call_id")) in untrusted_tools
     ]
 
 
@@ -45,32 +47,52 @@ def fingerprint(call):
     return (name, json.dumps(args, sort_keys=True))
 
 
-def _survival(llm, messages, tools, target, removed, runs):
-    context = copy.deepcopy(messages)
-    for i in removed:
-        context[i]["content"] = PLACEHOLDER
-    hits = 0
-    for _ in range(runs):
-        reply = llm(context, tools)
-        hits += any(fingerprint(c) == target for c in reply.get("tool_calls") or [])
-    return hits / runs
+class _Replay:
+    def __init__(self, llm, messages, tools, call, runs):
+        self.llm, self.messages, self.tools, self.runs = llm, messages, tools, runs
+        self.target = fingerprint(call)
+        self.calls = 0
+
+    def survival(self, removed):
+        context = copy.deepcopy(self.messages)
+        for i in removed:
+            context[i]["content"] = PLACEHOLDER
+        hits = 0
+        for _ in range(self.runs):
+            self.calls += 1
+            reply = self.llm(context, self.tools)
+            hits += any(fingerprint(c) == self.target for c in reply.get("tool_calls") or [])
+        return hits / self.runs
+
+
+def _minimal_set(replay, chunks):
+    needed = list(chunks)
+    for i in chunks:
+        trial = [c for c in needed if c != i]
+        if trial and replay.survival(trial) < SURVIVES:
+            needed = trial
+    return needed
 
 
 # ponytail: single-step teacher-forced replay. Earlier hijacked assistant turns stay in
 # the history and can bias survival upward. Measure that before trusting verdicts.
-def attribute(llm, messages, tools, call, runs=3, max_chunks=5):
-    chunks = untrusted_indexes(messages)
+def attribute(llm, messages, tools, call, runs=3, max_chunks=5, untrusted_tools=UNTRUSTED_TOOLS, group_removal=True):
+    chunks = untrusted_indexes(messages, untrusted_tools)
     if not chunks:
         return Attribution("user-driven")
     if len(chunks) > max_chunks:
         return Attribution("inconclusive")
 
-    target = fingerprint(call)
-    loo = {i: _survival(llm, messages, tools, target, [i], runs) for i in chunks}
-    if min(loo.values()) < SURVIVES:
-        return Attribution("untrusted-driven", "leave_one_out", loo)
+    replay = _Replay(llm, messages, tools, call, runs)
+    loo = {i: replay.survival([i]) for i in chunks}
+    causing = [i for i, rate in loo.items() if rate < SURVIVES]
+    if causing:
+        return Attribution("untrusted-driven", "leave_one_out", loo, causing=causing, llm_calls=replay.calls)
+    if not group_removal:
+        return Attribution("user-driven", None, loo, llm_calls=replay.calls)
 
-    group = _survival(llm, messages, tools, target, chunks, runs)
-    if group < SURVIVES:
-        return Attribution("untrusted-driven", "group", loo, group)
-    return Attribution("user-driven", None, loo, group)
+    group = replay.survival(chunks)
+    if group >= SURVIVES:
+        return Attribution("user-driven", None, loo, group, llm_calls=replay.calls)
+    needed = _minimal_set(replay, chunks)
+    return Attribution("untrusted-driven", "group", loo, group, needed, replay.calls)
