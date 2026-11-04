@@ -1,6 +1,6 @@
 import json
 
-from arena.record import ATTACKS as RECORDED, record, scripted_victim
+from arena.record import ATTACKS as RECORDED, record, record_lab, scripted_victim
 from eval.ablation import CONFIGS, ablation, run_scenario
 from eval.scenarios import ATTACKS
 from eval.scoreboard import build
@@ -40,3 +40,17 @@ def test_scoreboard_only_uses_complete_reports(tmp_path):
     runs = build(tmp_path)["runs"]
     assert [r["model"] for r in runs] == ["m"]
     assert "per_scenario" not in runs[0]["attack"]
+
+
+def test_lab_runs_every_layer_combination_for_real():
+    lab = record_lab(scripted_victim, "scripted demo")
+    assert len(lab["results"]) == len(lab["attacks"]) * 32
+    off, full = "00000", "11111"
+    for attack in lab["attacks"]:
+        assert lab["results"][f"{attack['key']}:{off}"]["won"], attack["key"]
+        assert not lab["results"][f"{attack['key']}:{full}"]["won"], attack["key"]
+    # origin alone stops the attacker's own address but not a trusted one, which the page's text claims
+    assert not lab["results"]["plain:00100"]["won"]
+    assert lab["results"]["trusted:11100"]["won"]
+    assert not lab["results"]["trusted:11101"]["won"]
+    assert lab["results"]["dump:11110"]["blocked_by"] == "canary"

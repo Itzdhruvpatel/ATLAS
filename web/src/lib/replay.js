@@ -46,6 +46,12 @@ export function lampStates(events, upTo, level, won) {
   return states;
 }
 
+const VERDICTS = {
+  "untrusted-driven": "Replay shows the document caused this call",
+  "user-driven": "Replay shows the user's request caused this call",
+  inconclusive: "Replay couldn't tell what caused this call",
+};
+
 function short(text, n = 180) {
   const s = String(text ?? "");
   return s.length > n ? `${s.slice(0, n)}...` : s;
@@ -60,7 +66,7 @@ export function describe(e) {
     case "block": return { head: `Firewall blocked ${e.tool}`, body: `${e.reasons.join(" ")} Call: ${short(e.arguments)}` };
     case "causal": {
       const a = e.attribution;
-      return { head: `Replay without untrusted text: ${a.verdict}`, body: `Ran ${a.llm_calls} extra model calls${a.stage ? `, decided at ${a.stage.replace(/_/g, " ")}` : ""}.` };
+      return { head: VERDICTS[a.verdict] ?? a.verdict, body: `Ran ${a.llm_calls} extra model calls${a.stage ? `, decided at ${a.stage.replace(/_/g, " ")}` : ""}.` };
     }
     default: return { head: "Waiting", body: "" };
   }
