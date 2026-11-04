@@ -44,9 +44,9 @@ class OpenAICompatLLM:
         body = {"model": self.model, "messages": messages, "tools": tools, "temperature": self.temperature}
         for attempt in range(3):
             response = self.client.post("/chat/completions", json=body)
-            if response.status_code != 429 or attempt == 2:
+            if response.status_code not in (429, 503) or attempt == 2:
                 break
-            # Free tiers rate limit per minute, so a short wait usually clears it.
+            # Rate limits and busy models usually clear after a short wait.
             time.sleep(self.retry_wait * (attempt + 1))
         response.raise_for_status()
         return response.json()["choices"][0]["message"]
