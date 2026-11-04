@@ -101,7 +101,7 @@ function Hero({ run }) {
           <Icon name="shield" className="icon-sm" />A firewall for AI agents
         </motion.p>
         <motion.h1 initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1.2, ease: [0.2, 0.8, 0.2, 1] }}>
-          The PDF read<br />your agent.
+          The PDF read<br /><em>your agent.</em>
         </motion.h1>
         <motion.p className="hero-lede" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1, delay: 0.5 }}>
           AI agents can't tell your instructions from text they happen to read. ATLAS sits between the agent and its tools, and stops hidden instructions from turning into actions.
@@ -141,10 +141,10 @@ export default function Landing() {
       <main id="main" tabIndex={-1} style={{ outline: "none" }}>
         <Hero run={run} />
 
-        <Section id="problem" shade="right" className="tall">
-          <div className="right-half pad-a">
+        <Section id="problem" shade="center" className="tall">
+          <div className="chapter-wide pad-a center-head">
             <Reveal><Kicker n="01">The problem</Kicker></Reveal>
-            <Reveal delay={0.1}><h2 className="title">No hacker in your network. Just a document.</h2></Reveal>
+            <Reveal delay={0.1}><h2 className="title">No hacker in your network.<br /><em>Just a document.</em></h2></Reveal>
             <Reveal delay={0.2}><p className="lead">The victim only asked for a summary. Instructions hidden in what the agent reads do the rest, using the access you gave it.</p></Reveal>
             <dl className="ledger">
               {LEDGER.map(([number, text, href, source], i) => (
@@ -170,7 +170,7 @@ export default function Landing() {
           <div className="chapter-wide pad-b">
             <Reveal><Kicker n="03">The arena</Kicker></Reveal>
             <Reveal delay={0.1}><h2 className="title narrow">Five levels. Beat them with your own words.</h2></Reveal>
-            <ol className="levels-row">
+            <ol className="levels-ladder">
               {LEVELS.map(([name, text], i) => (
                 <Reveal key={name} delay={0.12 * i} className="level-col">
                   <span className="level-n tnum">{i + 1}</span>

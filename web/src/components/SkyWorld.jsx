@@ -1,8 +1,8 @@
 import { useEffect, useRef } from "react";
 
-// A real-time raymarched landscape behind the whole landing page, adapted from TrustCheck (Team Semicolons).
-// Scrolling flies one camera along a river valley. The sky tells the attack's story: orange dusk, a crimson
-// alarm, then night under an aurora and a clean dawn. Plain WebGL2, one fragment shader.
+// A real-time raymarched flight above the clouds. The engine is adapted from TrustCheck (Team Semicolons).
+// Scrolling flies one camera down a cloud canyon, and the sky tells the attack's story: sunset, a storm with
+// lightning, night under an aurora, then a clear dawn. Plain WebGL2, one fragment shader.
 
 const VERT = `#version 300 es
 in vec2 p; void main() { gl_Position = vec4(p, 0.0, 1.0); }`;
@@ -27,25 +27,26 @@ float fbm(vec2 p) { float a = 0.0, b = 0.5; for (int i = 0; i < 4; i++) { a += b
 
 float pathX(float z) { return 70.0 * sin(z * 0.0042) + 34.0 * sin(z * 0.0105 + 1.3); }
 
-// eroded mountains (derivative-damped fbm), with a valley carved along the flight path
+// a sea of soft, rounded cloud, with a canyon carved along the flight path
 float terrain(vec2 p, int oct) {
-  vec2 q = p * 0.0032; float a = 0.0, b = 1.0; vec2 d = vec2(0.0);
-  for (int i = 0; i < 14; i++) { if (i >= oct) break; vec3 n = noised(q); d += n.yz; a += b * n.x / (1.0 + dot(d, d)); b *= 0.5; q = m2 * q * 2.0; }
-  float h = 250.0 * a;
-  float v = smoothstep(70.0, 460.0, abs(p.x - pathX(p.y)));
-  return mix(h * 0.1 - 6.0, h * 1.15 + 60.0 * v, v * v * (3.0 - 2.0 * v));
+  vec2 q = p * 0.0023 + vec2(uTime * 0.008, 0.0); float a = 0.0, b = 0.5, sum = 0.0;
+  for (int i = 0; i < 6; i++) { if (i >= min(oct, 5)) break; a += b * noised(q).x; sum += b; b *= 0.42; q = m2 * q * 2.1; }
+  a /= sum;
+  float h = 230.0 * pow(smoothstep(0.24, 0.82, a), 1.5);
+  float v = smoothstep(40.0, 360.0, abs(p.x - pathX(p.y)));
+  return mix(h * 0.18 + 10.0, h + 34.0 * v, v * v * (3.0 - 2.0 * v));
 }
 
 // ---------- time of day: five keyframes along the scroll ----------
 struct Sky { vec3 hor; vec3 zen; vec3 lcol; vec3 amb; vec3 L; float night; float aur; float fogk; };
 Sky skyAt(float s) {
-  vec3 H[5] = vec3[5](vec3(1.15, 0.52, 0.3), vec3(0.95, 0.17, 0.2), vec3(0.06, 0.07, 0.17), vec3(0.04, 0.09, 0.13), vec3(1.05, 0.62, 0.42));
-  vec3 Z[5] = vec3[5](vec3(0.13, 0.2, 0.5), vec3(0.14, 0.04, 0.18), vec3(0.008, 0.01, 0.04), vec3(0.004, 0.011, 0.028), vec3(0.22, 0.27, 0.66));
-  vec3 C[5] = vec3[5](vec3(2.5, 1.2, 0.5), vec3(1.5, 0.36, 0.28), vec3(0.32, 0.42, 0.75), vec3(0.28, 0.42, 0.68), vec3(1.8, 0.95, 0.6));
+  vec3 H[5] = vec3[5](vec3(1.35, 0.5, 0.14), vec3(0.8, 0.1, 0.16), vec3(0.06, 0.07, 0.17), vec3(0.04, 0.09, 0.13), vec3(1.3, 0.7, 0.36));
+  vec3 Z[5] = vec3[5](vec3(0.05, 0.12, 0.38), vec3(0.09, 0.02, 0.12), vec3(0.008, 0.01, 0.04), vec3(0.004, 0.011, 0.028), vec3(0.22, 0.27, 0.66));
+  vec3 C[5] = vec3[5](vec3(2.9, 1.25, 0.42), vec3(1.5, 0.36, 0.28), vec3(0.32, 0.42, 0.75), vec3(0.28, 0.42, 0.68), vec3(1.8, 0.95, 0.6));
   vec3 A[5] = vec3[5](vec3(0.2, 0.17, 0.3), vec3(0.15, 0.1, 0.26), vec3(0.04, 0.05, 0.1), vec3(0.035, 0.07, 0.09), vec3(0.24, 0.2, 0.34));
   vec3 D[5] = vec3[5](normalize(vec3(0.35, 0.1, 1.0)), normalize(vec3(0.2, 0.018, 1.0)), normalize(vec3(-0.5, 0.55, 0.7)), normalize(vec3(-0.4, 0.6, 0.7)), normalize(vec3(-0.45, 0.12, 1.0)));
   float K[5] = float[5](0.0, 0.2, 0.45, 0.72, 1.0);
-  float F[5] = float[5](0.55, 0.75, 1.0, 0.9, 0.5);
+  float F[5] = float[5](0.42, 0.75, 1.0, 0.9, 0.3);
   Sky o; int i = 0;
   for (int k = 0; k < 4; k++) if (s >= K[k]) i = k;
   float t = smoothstep(K[i], K[i + 1], s);
@@ -71,7 +72,9 @@ vec3 aurora(vec3 rd) {
 
 vec3 skyColor(vec3 ro, vec3 rd, Sky k) {
   float y = max(rd.y, 0.0);
-  vec3 col = mix(k.hor, k.zen, pow(y, 0.42));
+  // a rose band between horizon and zenith, because orange blended straight into blue turns grey-green
+  vec3 mid = vec3(max(k.hor.r, k.zen.r) * 0.62, min(k.hor.g, k.zen.g) * 1.1 + 0.015, (k.hor.b + k.zen.b) * 0.62);
+  vec3 col = mix(mix(k.hor, mid, smoothstep(0.0, 0.2, y)), k.zen, smoothstep(0.12, 0.75, y));
   float sd = max(dot(rd, k.L), 0.0), day = 1.0 - k.night;
   col += k.lcol * (0.12 * pow(sd, 8.0) + 0.5 * pow(sd, 48.0)) * day;          // glow around the sun
   col += k.lcol * 6.0 * pow(sd, 1600.0) * day;                                   // the sun's disc
@@ -117,39 +120,34 @@ vec3 normalAt(vec3 p, float t, int oct) {
 }
 
 vec3 albedo(vec3 p, vec3 n) {
-  float r = noised(p.xz * 0.02).x, r2 = noised(p.xz * 0.15).x;
-  vec3 rock = mix(vec3(0.19, 0.16, 0.18), vec3(0.36, 0.31, 0.3), r);
-  vec3 forest = mix(vec3(0.035, 0.06, 0.04), vec3(0.08, 0.11, 0.05), r2);
-  float g = smoothstep(0.72, 0.88, n.y) * (1.0 - smoothstep(95.0, 160.0, p.y + 30.0 * r));
-  vec3 c = mix(rock, forest, g);
-  float snow = smoothstep(150.0, 200.0, p.y + 40.0 * r) * smoothstep(0.5, 0.8, n.y);
-  c = mix(c, vec3(0.86, 0.88, 0.95), snow);
-  return mix(c, vec3(0.16, 0.13, 0.11), (1.0 - smoothstep(W, W + 3.0, p.y)) * 0.85); // wet banks
+  return mix(vec3(0.82, 0.84, 0.92), vec3(1.0, 0.98, 0.95), smoothstep(30.0, 190.0, p.y));
 }
 
+// clouds scatter light, so the lit side wraps around and shadows stay soft and tinted by the sky
 vec3 shade(vec3 p, vec3 n, Sky k, bool shadows) {
-  float dif = clamp(dot(n, k.L), 0.0, 1.0);
-  float sh = (shadows && dif > 0.001) ? softShadow(p + n * 1.5, k.L) : 1.0;
+  float wrap = clamp(dot(n, k.L) * 0.55 + 0.45, 0.0, 1.0);
+  float dif = wrap * wrap;
+  float sh = (shadows && dif > 0.001) ? 0.35 + 0.65 * softShadow(p + n * 1.5, k.L) : 1.0;
   float sky = 0.5 + 0.5 * n.y;
-  float bounce = clamp(-n.y * 0.5 + 0.5, 0.0, 1.0) * 0.15;
-  vec3 lin = k.lcol * dif * vec3(sh, sh * sh * 0.5 + 0.5 * sh, sh * sh * 0.8 + 0.2 * sh) + k.amb * sky * 1.3 + k.lcol * bounce * 0.4;
+  vec3 shadow = mix(k.zen, k.hor, 0.42) + vec3(0.04, 0.0, 0.05);
+  vec3 lin = k.lcol * dif * sh * 1.08 + shadow * sky * 0.78 + k.amb * 0.3;
   return albedo(p, n) * lin;
 }
 
 vec3 fog(vec3 col, vec3 rd, float t, vec3 p, Sky k) {
   float sd = max(dot(rd, k.L), 0.0);
   vec3 fc = mix(k.hor * 0.92, k.lcol * 0.75, pow(sd, 6.0) * (1.0 - k.night * 0.6));
-  col = mix(col, fc, 1.0 - exp(-pow(t * 0.0003, 1.6) * 1.5 * k.fogk));
+  col = mix(col, fc, 1.0 - exp(-pow(t * 0.00028, 1.6) * 1.1 * k.fogk));
   float mist = exp(-max(p.y - W, 0.0) * 0.055) * (1.0 - exp(-t * 0.0028));
-  return mix(col, fc * 1.1 + k.amb * 0.3, mist * 0.38 * k.fogk);
+  return mix(col, fc * 1.1 + k.amb * 0.3, mist * 0.12 * k.fogk);
 }
 
 // the flight: altitude above the ground and pitch keyed to the scroll
 float altAt(float s) {
-  float a = 240.0;
-  a = mix(a, 20.0, smoothstep(0.04, 0.17, s));
+  float a = 150.0;
+  a = mix(a, 62.0, smoothstep(0.04, 0.17, s));
   a = mix(a, 75.0, smoothstep(0.3, 0.42, s));
-  a = mix(a, 34.0, smoothstep(0.5, 0.6, s));
+  a = mix(a, 70.0, smoothstep(0.5, 0.6, s));
   a = mix(a, 130.0, smoothstep(0.64, 0.8, s));
   a = mix(a, 210.0, smoothstep(0.86, 1.0, s));
   return a;
@@ -182,7 +180,7 @@ void main() {
   int steps = uQ > 0.5 ? 150 : 100;
   float tmax = 4200.0;
   float t = march(ro, rd, tmax, steps, uQ > 0.5 ? 7 : 6);
-  float tw = rd.y < 0.0 ? (W - ro.y) / rd.y : 1e9;
+  float tw = 1e9; // no water up here
   vec3 col;
 
   if (min(t, tw) < tmax) {
@@ -206,9 +204,19 @@ void main() {
     }
   } else col = skyColor(ro, rd, k);
 
+  // lightning inside the storm chapter, slow and soft, and off when motion is reduced
+  float storm = smoothstep(0.1, 0.2, s) * (1.0 - smoothstep(0.36, 0.44, s));
+  if (storm > 0.0 && uTime > 0.0) {
+    float beat = uTime * 1.7, cell = floor(beat);
+    if (hash12(vec2(cell, 3.1)) > 0.74) {
+      vec2 at = vec2(hash12(vec2(cell, 1.7)) * 2.4 - 1.2, hash12(vec2(cell, 2.9)) * 0.7 - 0.45);
+      col += vec3(1.0, 0.72, 0.82) * storm * 0.9 * exp(-fract(beat) * 4.5) * exp(-length(uv - at) * 1.5);
+    }
+  }
+
   // a soft bloom around the sun or moon, film tone mapping, vignette and grain
   col += mix(k.lcol, vec3(0.5, 0.6, 0.9), k.night) * 0.1 * pow(max(dot(rd, k.L), 0.0), 16.0);
-  col = aces(col * 1.2);
+  col = aces(col * 1.02);
   col = pow(col, vec3(0.4545));
   vec2 q = frag / uRes;
   col *= 0.5 + 0.5 * pow(16.0 * q.x * q.y * (1.0 - q.x) * (1.0 - q.y), 0.18);
