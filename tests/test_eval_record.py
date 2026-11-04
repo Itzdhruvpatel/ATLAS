@@ -1,0 +1,42 @@
+import json
+
+from arena.record import ATTACKS as RECORDED, record, scripted_victim
+from eval.ablation import CONFIGS, ablation, run_scenario
+from eval.scenarios import ATTACKS
+from eval.scoreboard import build
+from tests.fake import EvilLLM, final
+
+
+def test_recordings_show_every_layer_story_and_are_labelled():
+    data = record(scripted_victim, "scripted demo", True)
+    outcomes = [(r["level"], r["won"], r["blocked_by"]) for r in data["runs"]]
+    assert outcomes[0] == (1, True, None)
+    assert outcomes[1][1] is False
+    assert outcomes[2] == (3, False, "origin")
+    assert outcomes[3] == (3, True, None)
+    assert outcomes[4] == (5, False, "causal")
+    assert all(r["scripted"] for r in data["runs"])
+    assert sum(r["featured"] for r in data["runs"]) == 1
+    assert len(data["runs"]) == len(RECORDED)
+
+
+def test_ablation_covers_every_config():
+    rows = ablation(lambda m, t: final("nothing"), configs=CONFIGS, attacks=ATTACKS[:1], benign=[])
+    assert [r["config"] for r in rows] == list(CONFIGS)
+    assert all(r["attack"]["rate"] == 0.0 for r in rows)
+
+
+def test_no_firewall_leaks_and_full_stack_does_not():
+    assert run_scenario(ATTACKS[0], EvilLLM(), CONFIGS["No firewall"])
+    assert not run_scenario(ATTACKS[0], EvilLLM(), CONFIGS["Full stack, group removal"])
+
+
+def test_scoreboard_only_uses_complete_reports(tmp_path):
+    good = {"complete": True, "model": "m", "commit": "c",
+            "attack": {"rate": 0.5, "ci95": [0, 1], "n": 2, "errors": 0, "per_scenario": {}},
+            "benign": {"rate": 1.0, "ci95": [1, 1], "n": 2, "errors": 0, "per_scenario": {}}}
+    (tmp_path / "baseline-a.json").write_text(json.dumps(good))
+    (tmp_path / "baseline-b.json").write_text(json.dumps({**good, "complete": False, "model": "partial"}))
+    runs = build(tmp_path)["runs"]
+    assert [r["model"] for r in runs] == ["m"]
+    assert "per_scenario" not in runs[0]["attack"]
