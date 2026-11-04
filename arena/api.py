@@ -13,6 +13,7 @@ from pathlib import Path
 
 import httpx
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
@@ -81,9 +82,12 @@ def scoreboard():
     return json.loads(path.read_text(encoding="utf-8")) if path.exists() else {"runs": []}
 
 
-def create_app(store, llm, limits, admin_key="", model="unknown", trust_proxy=False, max_active=4, web_dist=None):
+def create_app(store, llm, limits, admin_key="", model="unknown", trust_proxy=False, max_active=4, web_dist=None, allow_origin=""):
     app = FastAPI(title="ATLAS arena", docs_url=None, redoc_url=None)
     active = threading.BoundedSemaphore(max_active)
+    if allow_origin:
+        # For a site hosted elsewhere. Browsers call the arena directly, so rate limits see the real visitor.
+        app.add_middleware(CORSMiddleware, allow_origins=[allow_origin], allow_methods=["GET", "POST"], allow_headers=["content-type"])
 
     @app.middleware("http")
     async def headers(request, call_next):
@@ -200,4 +204,5 @@ def main_app():
     limits = Limits(store, int(os.environ.get("ATLAS_ROUNDS_PER_HOUR", 10)), int(os.environ.get("ATLAS_CALLS_PER_DAY", 500)),
                     os.environ.get("ATLAS_VISITOR_SALT", "").encode() or None)
     return create_app(store, llm, limits, os.environ.get("ATLAS_ADMIN_KEY", ""), model,
-                      os.environ.get("ATLAS_TRUST_PROXY") == "1", web_dist=ROOT / "web" / "dist")
+                      os.environ.get("ATLAS_TRUST_PROXY") == "1", web_dist=ROOT / "web" / "dist",
+                      allow_origin=os.environ.get("ATLAS_ALLOW_ORIGIN", ""))

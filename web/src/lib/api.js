@@ -1,7 +1,10 @@
+// Empty when the same server hosts the site and the arena.
+const API_URL = import.meta.env.VITE_API_URL ?? "";
+
 async function request(path, options) {
   let response;
   try {
-    response = await fetch(path, options);
+    response = await fetch(API_URL + path, options);
   } catch {
     throw Object.assign(new Error("The arena server cannot be reached. Check your connection and try again."), { code: "offline" });
   }
