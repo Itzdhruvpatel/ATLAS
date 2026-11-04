@@ -208,7 +208,7 @@
     ],
     "n": 20
    },
-   "commit": "2fe46ff"
+   "commit": "903062d"
   },
   {
    "model": "lfm2.5:8b",
@@ -230,69 +230,6 @@
     "n": 20
    },
    "commit": "2fe46ff"
-  },
-  {
-   "model": "lfm2.5:8b",
-   "config": "Full stack, leave-one-out, harder attacks",
-   "attack": {
-    "rate": 0.0,
-    "ci95": [
-     0.0,
-     0.0
-    ],
-    "n": 12
-   },
-   "benign": {
-    "rate": 0.8,
-    "ci95": [
-     0.6,
-     0.95
-    ],
-    "n": 20
-   },
-   "commit": "2fe46ff"
-  },
-  {
-   "model": "lfm2.5:8b",
-   "config": "Full stack, group removal, harder attacks",
-   "attack": {
-    "rate": 0.0,
-    "ci95": [
-     0.0,
-     0.0
-    ],
-    "n": 12
-   },
-   "benign": {
-    "rate": 0.75,
-    "ci95": [
-     0.55,
-     0.9
-    ],
-    "n": 20
-   },
-   "commit": "2fe46ff"
-  },
-  {
-   "model": "lfm2.5:8b",
-   "config": "Structure and origin only, harder attacks",
-   "attack": {
-    "rate": 0.0,
-    "ci95": [
-     0.0,
-     0.0
-    ],
-    "n": 12
-   },
-   "benign": {
-    "rate": 0.9,
-    "ci95": [
-     0.75,
-     1.0
-    ],
-    "n": 20
-   },
-   "commit": "903062d"
   },
   {
    "model": "lfm2.5:8b",

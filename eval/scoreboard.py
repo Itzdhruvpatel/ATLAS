@@ -20,12 +20,20 @@ def build(reports=REPORTS):
         r = json.loads(path.read_text(encoding="utf-8"))
         if r.get("complete") and trustworthy(r):
             runs.append({"model": r["model"], "config": "No firewall, harder attacks" if r.get("suite") == "strong" else "No firewall", "attack": r["attack"], "benign": r["benign"], "commit": r["commit"]})
+    setups = []
     for path in sorted(Path(reports).glob("ablation-*.json")):
         r = json.loads(path.read_text(encoding="utf-8"))
         if not r.get("complete", True) or not trustworthy(r):
             continue
         hard = ", harder attacks" if r.get("suite") == "strong" else ""
-        runs += [{"model": r["model"], "config": row["config"] + hard, "attack": row["attack"], "benign": row["benign"], "commit": r["commit"]} for row in r["rows"] if row["attack"]["n"] or row["benign"]["n"]]
+        for row in r["rows"]:
+            if row["attack"]["n"] or row["benign"]["n"]:
+                setups.append((r.get("finished", ""), {"model": r["model"], "config": row["config"] + hard, "attack": row["attack"], "benign": row["benign"], "commit": r["commit"]}))
+    # A retest replaces the older result for that setup, and the older report stays in the repo.
+    latest = {}
+    for _, run in sorted(setups, key=lambda item: item[0]):
+        latest[(run["model"], run["config"])] = run
+    runs += latest.values()
     for run in runs:
         for key in ("attack", "benign"):
             if run[key]:

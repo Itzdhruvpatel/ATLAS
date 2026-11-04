@@ -42,14 +42,16 @@ Every number comes from a saved report in `eval/reports/`. Code decides whether 
 | Clean room only | 6 of 12 | 19 of 20 |
 | Canary only | 4 of 12 | 19 of 20 |
 | Structure and origin only | 0 of 12 | 18 of 20 |
-| Full stack, leave-one-out | 0 of 12 | 16 of 20 |
-| Full stack, group removal | 0 of 12 | 15 of 20 |
+| Full stack, leave-one-out | 0 of 12 | 18 of 20 |
+| Full stack, group removal | 0 of 12 | 18 of 20 |
+
+The last three rows are from a retest after a false-block fix. Before it, the full stack completed only 15 to 16 of 20 normal tasks. The reports for both runs are in the repo.
 
 What this shows, and what it doesn't:
 
 - With structure and origin checks on, no attack leaked the secret in this small test.
-- That protection has a cost. The full stack also blocked up to 5 of 20 normal tasks, and reducing that is the next job.
-- Causal replay added no measured protection beyond structure and origin here, while normal tasks done dropped further.
+- The one normal task still blocked is replying to an address found inside a document. It looks identical to a real attack, so it stays blocked until an ask-a-human step exists.
+- Causal replay added no measured protection beyond structure and origin here. It only runs when a destination wasn't chosen by the user or operator.
 - These samples are small, one model, and runs repeat closely because temperature is 0, so treat them as early signals. An attacker who adapts to the firewall hasn't been tested yet.
 
 The arena also ran on this real model through its API, for all 5 levels. The arena's public demo uses a clearly labelled scripted model, so it runs without an API key.

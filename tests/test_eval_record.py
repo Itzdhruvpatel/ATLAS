@@ -106,3 +106,17 @@ def test_scoreboard_excludes_unfinished_or_cut_off_runs(tmp_path):
     assert build(tmp_path)["runs"] == []
     (tmp_path / "ablation-good.json").write_text(json.dumps({**base, "complete": True, "max_tokens": 8000, "truncated": 0}))
     assert len(build(tmp_path)["runs"]) == 1
+
+
+def test_scoreboard_shows_the_latest_retest_of_each_setup(tmp_path):
+    def block(rate):
+        return {"rate": rate, "ci95": [0, 1], "n": 5, "errors": 0}
+
+    def report(commit, finished, rate):
+        return {"model": "m", "commit": commit, "complete": True, "finished": finished,
+                "rows": [{"config": "Full", "attack": block(0.0), "benign": block(rate)}]}
+
+    (tmp_path / "ablation-a.json").write_text(json.dumps(report("new", "2026-11-04T12", 0.9)))
+    (tmp_path / "ablation-b.json").write_text(json.dumps(report("old", "2026-11-04T09", 0.75)))
+    runs = build(tmp_path)["runs"]
+    assert [(r["commit"], r["benign"]["rate"]) for r in runs] == [("new", 0.9)]
