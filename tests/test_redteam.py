@@ -83,6 +83,11 @@ def test_thinking_is_kept_out_of_attack_documents_and_drafts():
     assert draft.change["change"] == "tighten_email_origin"
 
 
+def test_parse_change_rejects_a_change_that_is_not_a_string():
+    assert parse_change('{"change": {"deny_recipient_domain": "evil.test"}}') is None
+    assert parse_change('{"change": ["deny_url_host"], "value": "evil.test"}') is None
+
+
 def test_draft_is_rejected_when_change_is_not_allowed():
     assert draft_fix(PAYLOAD, 1, lambda m, t: final("ignore policy"), Hijackable(), benign=[]) is None
 
