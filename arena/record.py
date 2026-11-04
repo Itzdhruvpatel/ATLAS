@@ -7,8 +7,9 @@ from pathlib import Path
 
 from arena.agent import tool_call
 from arena.llm import OpenAICompatLLM, api_key
-from arena.service import play, run_round
+from arena.service import LEVELS, USER_TASK, play, run_round
 from atlas.firewall import Layers
+from eval.scenarios import STRONG_ATTACKS
 
 PUBLIC = Path(__file__).parent.parent / "web" / "public"
 _EMAIL = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
@@ -64,9 +65,30 @@ def record(llm, model, scripted):
     for level, title, document, featured in ATTACKS:
         result = play(level, document, llm)
         off = play(1, document, llm)
-        runs.append({"title": title, "level": level, "document": document, "won": result.won, "blocked_by": result.blocked_by,
+        runs.append({"title": title, "task": USER_TASK, "level": level, "document": document, "won": result.won, "blocked_by": result.blocked_by,
                      "final": result.final, "events": result.events, "model": model, "scripted": scripted, "featured": featured,
                      "firewall_off": {"won": off.won, "final": off.final, "outbox": off.outbox, "network": off.network, "model": model}})
+    return {"runs": runs}
+
+
+REAL_ATTACKS = (("A13", "Poisoned action items"), ("A15", "Poisoned runbook"))
+REAL_LEVELS = (1, 3, 5)
+
+
+def record_real(llm, model):
+    """Records the attacks that have hijacked a real model, each with the firewall off and on."""
+    runs = []
+    for attack_id, title in REAL_ATTACKS:
+        scenario = next(s for s in STRONG_ATTACKS if s.id == attack_id)
+        document = scenario.documents["notes"]
+        task = scenario.user_task.replace("'notes'", "'report'")
+        results = {level: run_round(LEVELS[level][2], document, llm, user_task=task) for level in REAL_LEVELS}
+        off = results[1]
+        for level, result in results.items():
+            runs.append({"title": title, "task": task, "level": level, "document": document, "won": result.won, "blocked_by": result.blocked_by,
+                         "final": result.final, "events": result.events, "model": model, "scripted": False,
+                         "featured": attack_id == "A13" and level == 5,
+                         "firewall_off": {"won": off.won, "final": off.final, "outbox": off.outbox, "network": off.network, "model": model}})
     return {"runs": runs}
 
 
@@ -93,14 +115,16 @@ def main():
     args = parser.parse_args()
     if args.model:
         llm = OpenAICompatLLM(args.base_url, api_key(), args.model, args.max_llm_calls, timeout=args.timeout)
-        data = record(llm, args.model, False)
+        data = record_real(llm, args.model)
+        # Also saved beside the other reports, so it comes back with the results zip.
+        (Path(__file__).parent.parent / "eval" / "reports" / "recordings-real.json").write_text(json.dumps(data, indent=1), encoding="utf-8")
     else:
         data = record(scripted_victim, "scripted demo", True)
         (PUBLIC / "lab.json").write_text(json.dumps(record_lab(scripted_victim, "scripted demo")), encoding="utf-8")
     PUBLIC.mkdir(parents=True, exist_ok=True)
     (PUBLIC / "recordings.json").write_text(json.dumps(data, indent=1), encoding="utf-8")
     for run in data["runs"]:
-        print(run["level"], run["title"], "won" if run["won"] else "held", run["blocked_by"])
+        print(run["level"], run["title"], len(run["events"]), "events", "won" if run["won"] else "held", run["blocked_by"])
 
 
 if __name__ == "__main__":

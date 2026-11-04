@@ -16,8 +16,9 @@ COPY redteam ./redteam
 COPY policies ./policies
 RUN pip install --no-cache-dir .
 COPY --from=web /web/dist ./web/dist
-RUN useradd --create-home atlas && mkdir /data && chown atlas /data
+RUN useradd --create-home atlas && mkdir -p /data && chown atlas /data
 USER atlas
 ENV ATLAS_DB=/data/arena.db
 EXPOSE 8000
-CMD ["uvicorn", "--factory", "arena.api:main_app", "--host", "0.0.0.0", "--port", "8000"]
+# Hosts set PORT. Run from /app so the site and policy files beside the code are found.
+CMD ["sh", "-c", "exec python -m uvicorn --factory arena.api:main_app --host 0.0.0.0 --port ${PORT:-8000}"]

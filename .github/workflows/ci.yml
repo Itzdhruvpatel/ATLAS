@@ -23,3 +23,17 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t atlas .
+      - run: docker run -d --name atlas -p 8000:8000 -e ATLAS_ARENA_MODEL="scripted demo" atlas
+      - name: Check the running container
+        run: |
+          for i in $(seq 1 30); do curl -sf localhost:8000/api/status && break; sleep 2; done
+          curl -sf localhost:8000/api/status | grep -q "scripted demo"
+          curl -sf localhost:8000/ | grep -q "<title>ATLAS"
+          curl -sf localhost:8000/recordings.json > /dev/null
+          code=$(curl -s -o /dev/null -w "%{http_code}" -X POST localhost:8000/api/rounds -H "content-type: application/json" -d '{"level":1,"document":"Report.","consent":true}')
+          test "$code" = "200"

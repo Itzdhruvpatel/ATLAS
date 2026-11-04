@@ -1,0 +1,18 @@
+# Free web service with the scripted arena, so no model bills are possible.
+services:
+  - type: web
+    name: atlas
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/status
+    envVars:
+      - key: ATLAS_ARENA_MODEL
+        value: scripted demo
+      - key: ATLAS_TRUST_PROXY
+        value: "1"
+      - key: ATLAS_ROUNDS_PER_HOUR
+        value: "30"
+      - key: ATLAS_ADMIN_KEY
+        generateValue: true
+      - key: ATLAS_VISITOR_SALT
+        generateValue: true

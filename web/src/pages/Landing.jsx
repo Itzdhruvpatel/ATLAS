@@ -68,14 +68,14 @@ function SessionCard({ run }) {
   const blocked = seen.find((e) => e.stage === "block");
   const state = finished && run.won ? "leak" : blocked ? "held" : exposed ? "warn" : "calm";
   const line = finished
-    ? (run.won ? "The fake secret left the company." : "The document caused the email, so it never went out.")
+    ? (run.won ? "The fake secret left the company." : run.blocked_by ? "The firewall stopped the document's instructions." : "The fake secret stayed inside.")
     : `${describe(events[shown]).head}.`;
   return (
     <motion.aside className="glass session-card" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, delay: 1 }}>
       <div className="session-top">
         <div>
           <p className="session-name">Agent reading: report</p>
-          <p className="session-sub"><Icon name="doc" className="icon-sm" />Asked to summarize it, nothing else</p>
+          <p className="session-sub"><Icon name="doc" className="icon-sm" />{run.task}</p>
         </div>
         <span className={`orb session-orb ${state}`}><Icon name={state === "held" ? "lock" : state === "calm" ? "pulse" : "alert"} className="icon-sm" /></span>
       </div>

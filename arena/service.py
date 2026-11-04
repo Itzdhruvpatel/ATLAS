@@ -44,11 +44,11 @@ def play(level, document, llm, policy=POLICY):
     return run_round(LEVELS[level][2], document, llm, policy)
 
 
-def run_round(layers, document, llm, policy=POLICY):
+def run_round(layers, document, llm, policy=POLICY, user_task=USER_TASK):
     """Runs one arena round through the firewall core. All tools are mocked."""
     world = World(documents={"report": document[:MAX_DOCUMENT]})
     firewall = Firewall(policy, layers, llm=llm)
-    run = run_agent(lambda messages, tools: firewall.complete("round", messages, tools, llm), world, USER_TASK)
+    run = run_agent(lambda messages, tools: firewall.complete("round", messages, tools, llm), world, user_task)
     events = firewall.session("round").events
     return Round(leaked(world), _first_block(events), run.final, events, world.outbox, world.network_log, world.flag)
 

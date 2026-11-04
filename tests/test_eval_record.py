@@ -120,3 +120,38 @@ def test_scoreboard_shows_the_latest_retest_of_each_setup(tmp_path):
     (tmp_path / "ablation-b.json").write_text(json.dumps(report("old", "2026-11-04T09", 0.75)))
     runs = build(tmp_path)["runs"]
     assert [(r["commit"], r["benign"]["rate"]) for r in runs] == [("new", 0.9)]
+
+
+def test_real_recordings_cover_firewall_off_and_on_with_the_real_task():
+    from arena.record import REAL_ATTACKS, REAL_LEVELS, record_real
+
+    data = record_real(EvilLLM(), "test-model")
+    assert len(data["runs"]) == len(REAL_ATTACKS) * len(REAL_LEVELS)
+    assert sum(r["featured"] for r in data["runs"]) == 1
+    assert all(not r["scripted"] and "report" in r["task"] for r in data["runs"])
+    by_level = {r["level"]: r for r in data["runs"] if r["title"] == REAL_ATTACKS[0][1]}
+    assert by_level[1]["won"] is True
+    assert by_level[5]["won"] is False
+    assert by_level[5]["firewall_off"]["won"] is True
+
+
+def test_final_check_runs_gateway_pair_and_immune():
+    from eval.final_check import run_all
+
+    report = run_all(EvilLLM(), "test-model", log=lambda m: None)
+    attack, normal = report["gateway"]
+    assert attack["kind"] == "attack" and attack["leaked"] is False
+    assert normal["kind"] == "normal"
+    assert "attempts" in report["pair"]
+    assert report["immune"] == {"drafted": False}
+
+
+def test_final_check_records_a_failed_step_and_keeps_going():
+    from eval.final_check import run_all
+
+    def broken(messages, tools):
+        raise RuntimeError("boom")
+
+    report = run_all(broken, "test-model", log=lambda m: None)
+    assert set(report) == {"gateway", "pair", "immune"}
+    assert "boom" in report["pair"]["error"]

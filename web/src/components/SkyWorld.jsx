@@ -251,7 +251,9 @@ export default function SkyWorld({ className = "" }) {
     let s = 0, s1 = 0, mx = 0, my = 0, tmx = 0, tmy = 0, raf = 0, last = performance.now(), avg = 16, frames = 0;
 
     const size = () => {
-      const w = Math.max(1, Math.round(innerWidth * scale)), h = Math.max(1, Math.round(innerHeight * scale));
+      // Render cost grows with pixels, so a 4K TV draws no more than a large laptop and is scaled up.
+      const fit = Math.min(1, 1600 / innerWidth);
+      const w = Math.max(1, Math.round(innerWidth * scale * fit)), h = Math.max(1, Math.round(innerHeight * scale * fit));
       if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; gl.viewport(0, 0, w, h); }
     };
     const target = () => { const max = document.documentElement.scrollHeight - innerHeight; return max > 0 ? Math.min(1, Math.max(0, scrollY / max)) : 0; };

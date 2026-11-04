@@ -365,3 +365,60 @@ tr:last-child td { border-bottom: 0; }
 .hero-nav, .hero-copy { position: relative; }
 
 .hero .chapter-shade { background: radial-gradient(ellipse 66% 50% at 50% 30%, rgb(30 12 24 / .42), rgb(30 12 24 / 0) 80%), linear-gradient(180deg, rgb(20 12 30 / .3), transparent 22%); }
+
+/* ---------- every screen: phones (portrait and landscape), tablets, laptops, TVs ---------- */
+.dock-wrap { bottom: max(12px, env(safe-area-inset-bottom)); max-width: 100vw; }
+.closing { padding-bottom: calc(24vh + 90px); }
+
+/* phone held sideways: too short for a full-height hero */
+@media (max-height: 520px) {
+  .hero { height: auto; min-height: 100svh; padding-bottom: 96px; }
+  .session-card { position: static; width: auto; margin: 24px var(--gutter) 0; }
+  .hero h1 { font-size: clamp(2.4rem, 9vh, 4rem); }
+  .dock { height: 58px; padding-top: 6px; }
+  .window { height: auto; }
+  .pane { overflow: visible; }
+}
+
+/* tablets: keep the Mac window, drop the fixed height so nothing gets squeezed */
+@media (min-width: 761px) and (max-width: 1024px) {
+  .sidebar { width: 180px; }
+  .hero-links { gap: 20px; }
+  .session-card { max-width: 40rem; margin-inline: auto; }
+}
+
+/* small phones */
+@media (max-width: 380px) {
+  .dock, .dock-slot { gap: 3px; }
+  .dock { padding-inline: 8px; }
+  .hero-nav .ghost { padding: 7px 12px; }
+}
+
+/* touch screens have no hover, so tooltips stay out of the way */
+@media (hover: none) { .dock-tip { display: none; } }
+
+/* TVs and large monitors: viewed from further away, so everything scales up together */
+@media (min-width: 1920px) {
+  html { font-size: 20px; }
+  .mac .pane, .mac .sidebar, .menubar, .titlebar { zoom: 1.2; }
+  .menubar { height: 28px; }
+  .window { max-width: none; height: calc(100dvh - 8.6rem); }
+  .dock-wrap { zoom: 1.2; }
+  .session-card { bottom: 132px; }
+  .chapter-wide { max-width: 86%; }
+  .chapter-shade.right + .chapter-body .right-half { width: 44%; }
+  .page { max-width: 90rem; }
+}
+@media (min-width: 2560px) {
+  html { font-size: 26px; }
+  .mac .pane, .mac .sidebar, .menubar, .titlebar { zoom: 1.6; }
+  .dock-wrap { zoom: 1.6; }
+  .session-card { bottom: 172px; }
+  .window { height: calc(100dvh - 9rem); }
+}
+@media (min-width: 3840px) {
+  html { font-size: 38px; }
+  .mac .pane, .mac .sidebar, .menubar, .titlebar { zoom: 2.3; }
+  .dock-wrap { zoom: 2.3; }
+  .session-card { bottom: 240px; }
+}
