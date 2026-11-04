@@ -6,7 +6,7 @@ import Replay from "./pages/Replay.jsx";
 import Scanner from "./pages/Scanner.jsx";
 import Scoreboard from "./pages/Scoreboard.jsx";
 
-const LINKS = [["#/arena", "Arena"], ["#/scoreboard", "Scoreboard"], ["#/scanner", "Scanner"], ["#/paper", "Paper"]];
+const LINKS = [["#/scoreboard", "Scoreboard"], ["#/scanner", "Scanner"], ["#/paper", "Paper"]];
 
 function useRoute() {
   const [hash, setHash] = useState(location.hash || "#/");
@@ -31,16 +31,18 @@ function page(hash) {
 
 export default function App() {
   const hash = useRoute();
+  const landing = hash === "#/" || hash === "#" || hash === "";
   useEffect(() => { document.getElementById("main")?.focus({ preventScroll: true }); }, [hash]);
   return (
     <>
       <a className="skip" href="#main" onClick={(e) => { e.preventDefault(); document.getElementById("main").focus(); }}>Skip to content</a>
-      <nav className="nav" aria-label="Main">
+      <nav className={`nav${landing ? " over" : ""}`} aria-label="Main">
         <div className="wrap nav-inner">
           <a className="brand" href="#/">ATLAS</a>
           <div className="nav-links">
             {LINKS.map(([href, label]) => <a key={href} href={href} aria-current={hash.startsWith(href) ? "page" : undefined}>{label}</a>)}
           </div>
+          <a className="nav-cta" href="#/arena">Open the arena</a>
         </div>
       </nav>
       <main id="main" tabIndex={-1} style={{ outline: "none" }}>{page(hash)}</main>

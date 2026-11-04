@@ -4,17 +4,17 @@ import { channels } from "../lib/replay.js";
 
 // The hero is a recorded attack drawn as terrain. x is the event sequence, z is the channel,
 // and each spike is something that happened in the run. Only the faint ripple is decoration.
-const ROWS = 46, COLS = 170, WIDTH = 17, DEPTH = 8.5;
+const ROWS = 56, COLS = 170, WIDTH = 16, DEPTH = 8.5;
 const CHANNELS = ["blocked", "replay", "allowed", "cleaned", "model", "exposure"];
 const SECONDS_PER_EVENT = 0.95;
 const HOLD_SECONDS = 4.5;
 
-const STEEL = new THREE.Color("#a9c6d4");
-const BASE = new THREE.Color("#22323d");
-const TAINT = new THREE.Color("#ffb000");
-const SAFE = new THREE.Color("#3fd07f");
-const FAULT = new THREE.Color("#ff4438");
-const BEAM = new THREE.Color("#ffffff");
+const STEEL = new THREE.Color("#b9c9e4");
+const BASE = new THREE.Color("#0c1428");
+const TAINT = new THREE.Color("#ffb46b");
+const SAFE = new THREE.Color("#7fe0b0");
+const FAULT = new THREE.Color("#ef5a3c");
+const BEAM = new THREE.Color("#fff6ec");
 
 const gauss = (d, width) => Math.exp(-(d * d) / (2 * width * width));
 
@@ -64,9 +64,9 @@ export default function TerrainHero({ events, won, onIndex, className }) {
     renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
     element.appendChild(renderer.domElement);
     const scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(0x22323d, 10, 20);
+    scene.fog = new THREE.Fog(0x0c1428, 9, 18);
     const camera = new THREE.PerspectiveCamera(42, 1.6, 0.1, 60);
-    camera.position.set(0, 5, 9.6);
+    camera.position.set(0, 5.2, 9.2);
 
     const geometry = new THREE.BufferGeometry();
     const positions = new Float32Array(ROWS * COLS * 3);
@@ -81,7 +81,7 @@ export default function TerrainHero({ events, won, onIndex, className }) {
 
     const beam = new THREE.Mesh(
       new THREE.PlaneGeometry(0.06, 3.6),
-      new THREE.MeshBasicMaterial({ color: 0xff7a26, transparent: true, opacity: 0.75, blending: THREE.AdditiveBlending, depthWrite: false }),
+      new THREE.MeshBasicMaterial({ color: 0xfff6ec, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false }),
     );
     beam.position.y = 1.4;
     scene.add(beam);
@@ -133,7 +133,9 @@ export default function TerrainHero({ events, won, onIndex, className }) {
           const cell = r * COLS + c;
           const i = cell * 3;
           const passed = x <= scan;
-          const ripple = 0.035 * Math.sin(c * 0.33 + r * 0.7 + elapsed * 1.4) * (0.5 + Math.sin(x * 9 - elapsed * 0.4) * 0.5);
+          const envelope = 0.3 + 0.7 * Math.pow(Math.abs(Math.sin(x * 11 + elapsed * 0.35)), 1.6);
+          const texture = 0.5 + 0.5 * Math.sin(c * 0.37 + r * 0.83 + elapsed * 1.7) * Math.cos(r * 2.1 + c * 0.11 - elapsed);
+          const ripple = 0.42 * envelope * texture * texture * (1.1 - z * 0.7);
           // Spikes rise only once the beam reaches them, so the event appears when it happened.
           const rise = passed ? 1 : 0.14;
           const h = heights[cell] * rise + ripple;
@@ -141,7 +143,7 @@ export default function TerrainHero({ events, won, onIndex, className }) {
           positions[i + 1] = Math.max(0, h);
           positions[i + 2] = (z - 0.5) * DEPTH;
 
-          color.copy(BASE).lerp(STEEL, depth * (0.34 + 0.66 * Math.min(1, h / 1.1)));
+          color.copy(BASE).lerp(STEEL, depth * (0.28 + 0.72 * Math.min(1, h / 1.2)));
           if (passed && taintAt >= 0 && x > taintAt) color.lerp(won ? FAULT : TAINT, 0.42 * depth);
           if (passed && kinds[cell] === 2) color.lerp(TAINT, 0.9);
           if (passed && kinds[cell] === 1) color.lerp(SAFE, 0.95);
@@ -153,10 +155,10 @@ export default function TerrainHero({ events, won, onIndex, className }) {
       geometry.attributes.position.needsUpdate = true;
       geometry.attributes.color.needsUpdate = true;
       beam.position.x = (scan - 0.5) * WIDTH;
-      beam.material.opacity = scan < 1 ? 0.75 : 0;
+      beam.material.opacity = scan < 1 ? 0.55 : 0;
 
       camera.position.x += (pointer.x * 1.3 - camera.position.x) * 0.04;
-      camera.position.y += (5 + pointer.y * 0.6 - camera.position.y) * 0.04;
+      camera.position.y += (5.2 + pointer.y * 0.6 - camera.position.y) * 0.04;
       camera.lookAt(0, 0.4, 0);
       renderer.render(scene, camera);
     };

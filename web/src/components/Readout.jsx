@@ -66,7 +66,7 @@ export function Annunciators({ events, index, level, won }) {
   return (
     <div className="annun" role="img" aria-label={`Firewall status: ${LAYERS.map(([k, n]) => `${n} ${states[k]}`).join(", ")}, leak ${states.leak === "leak" ? "detected" : "none"}`}>
       {LAYERS.map(([key, name]) => <div key={key} className={`lamp ${states[key]}`}>{name}</div>)}
-      <div className={`lamp ${states.leak}`}>SECRET LEAKED</div>
+      <div className={`lamp ${states.leak}`}>Secret leaked</div>
     </div>
   );
 }

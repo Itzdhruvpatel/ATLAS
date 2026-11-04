@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import LayerLab from "../components/LayerLab.jsx";
-import Readout, { Annunciators, prefersReducedMotion, usePlayer } from "../components/Readout.jsx";
+import Readout, { prefersReducedMotion, usePlayer } from "../components/Readout.jsx";
 import { recordings } from "../lib/api.js";
 import { describe } from "../lib/replay.js";
 
@@ -54,18 +54,19 @@ function Hero({ run }) {
         <p className="lede rise" style={{ "--d": "520ms" }}>AI agents can't tell your instructions from text they happen to read. ATLAS sits between the agent and its tools, and stops hidden instructions from turning into actions.</p>
         <div className="actions rise" style={{ "--d": "680ms" }}>
           <a className="btn" href="#/arena">Try to hijack the agent</a>
-          <a className="btn quiet" href="#lab">Flip the layers yourself</a>
+          <button type="button" className="btn quiet" onClick={() => document.getElementById("lab").scrollIntoView()}>Flip the layers yourself</button>
         </div>
       </div>
       {run && (
         <div className="wrap hero-bottom">
           <p className="hero-key">
-            This landscape is one recorded attack, one spike per event. Green marks the block. {run.scripted ? "Scripted demo model, real firewall code." : `Real run on ${run.model}.`}
+            This landscape is one recorded attack. Each tall peak is a real event and the ripple is decoration. Amber is the replay, green is the block. {run.scripted ? "Scripted demo model, real firewall code." : `Real run on ${run.model}.`}
           </p>
           <div className="hero-status">
             <div className="hero-stamp">{finished && <span className={`verdict slam ${run.won ? "won" : "held"}`}>{run.won ? "Secret leaked" : "Secret held"}</span>}</div>
-            <Annunciators events={events} index={shown} level={run.level} won={run.won} />
-            <p className="hero-caption"><b>{step.head}.</b></p>
+            <p className={`hero-caption ${finished || events[shown]?.stage === "block" ? "good" : ""}`}>
+              {finished ? (run.won ? "The secret left the company." : "The document caused the email, so it never went out.") : `${step.head}.`}
+            </p>
           </div>
         </div>
       )}
@@ -76,7 +77,7 @@ function Hero({ run }) {
 function BlackBox({ run }) {
   const player = usePlayer(run.events.length, false);
   return (
-    <section className="band">
+    <section className="band paper">
       <div className="wrap">
         <h2>Then read the black box.</h2>
         <p className="intro">That landscape is this plot. Every attack gets a flight recorder you can scrub through, one event at a time, and share with a link.</p>
@@ -112,7 +113,7 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="band deep" id="lab">
+      <section className="band white" id="lab">
         <div className="wrap">
           <h2>Turn the defenses off and see what breaks.</h2>
           <p className="intro">Start here: the origin check stops an attacker's own address, but a customer address already in the database slips past it. Now switch on causal replay.</p>
@@ -134,7 +135,7 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="band">
+      <section className="band paper">
         <div className="wrap">
           <h2>Add it with one line.</h2>
           <p className="intro">ATLAS speaks the OpenAI API, so most agents only need a new base URL. Each session gets its own taint record, canary and audit trail.</p>
@@ -146,7 +147,7 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="band paper">
+      <section className="band white">
         <div className="wrap">
           <h2>Where it can be wrong.</h2>
           <div className="limits">

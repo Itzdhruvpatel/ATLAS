@@ -1,11 +1,11 @@
 // Turns raw firewall events into what the readout and graph draw. Nothing here invents data.
 
 export const LAYERS = [
-  ["ingest", "CLEAN ROOM"],
-  ["structure", "STRUCTURE"],
-  ["origin", "ORIGIN"],
-  ["canary", "CANARY"],
-  ["causal", "CAUSAL"],
+  ["ingest", "Clean room"],
+  ["structure", "Structure"],
+  ["origin", "Origin"],
+  ["canary", "Canary"],
+  ["causal", "Causal replay"],
 ];
 
 export const ARMED_BY_LEVEL = {
