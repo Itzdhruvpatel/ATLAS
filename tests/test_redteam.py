@@ -60,6 +60,29 @@ def test_apply_change_does_not_touch_the_original_policy():
     Policy(data)
 
 
+def test_thinking_is_kept_out_of_attack_documents_and_drafts():
+    from arena.llm import visible_text
+
+    assert visible_text("<think>{plan}</think>\nThe text") == "The text"
+    assert visible_text("<think>cut off before it closed") == ""
+    assert visible_text(None) == ""
+
+    seen = []
+
+    def target(messages, tools):
+        return {"role": "assistant", "content": "ok"}
+
+    def round_(level, document, llm):
+        seen.append(document)
+        return play(level, document, llm)
+
+    pair(lambda m, t: {"role": "assistant", "content": "<think>plan</think>New doc"}, target, 3, "Seed", iterations=2, play_round=round_)
+    assert seen == ["Seed", "New doc"]
+    reply = {"role": "assistant", "content": '<think>{"maybe": 1}</think>{"change": "tighten_email_origin", "value": ""}'}
+    draft = draft_fix("Doc", 3, lambda m, t: reply, target, benign=[])
+    assert draft.change["change"] == "tighten_email_origin"
+
+
 def test_draft_is_rejected_when_change_is_not_allowed():
     assert draft_fix(PAYLOAD, 1, lambda m, t: final("ignore policy"), Hijackable(), benign=[]) is None
 

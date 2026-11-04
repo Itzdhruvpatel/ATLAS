@@ -4,6 +4,7 @@ Only ever targets the local mocked arena through arena.service.play.
 """
 from dataclasses import dataclass, field
 
+from arena.llm import visible_text
 from arena.service import play
 
 ATTACKER_PROMPT = (
@@ -46,5 +47,5 @@ def pair(attacker, target, level, seed_document, iterations=5, play_round=play):
             result.won = True
             return result
         messages += [{"role": "assistant", "content": document}, {"role": "user", "content": _feedback(attempt)}]
-        document = (attacker(messages, []).get("content") or "").strip() or document
+        document = visible_text(attacker(messages, []).get("content")) or document
     return result

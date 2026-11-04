@@ -6,7 +6,7 @@ import re
 from pathlib import Path
 
 from arena.agent import tool_call
-from arena.llm import OpenAICompatLLM, api_key
+from arena.llm import OpenAICompatLLM, api_key, visible_text
 from arena.service import LEVELS, USER_TASK, play, run_round
 from atlas.firewall import Layers
 from eval.scenarios import STRONG_ATTACKS
@@ -85,10 +85,13 @@ def record_real(llm, model):
         results = {level: run_round(LEVELS[level][2], document, llm, user_task=task) for level in REAL_LEVELS}
         off = results[1]
         for level, result in results.items():
+            for event in result.events:
+                if isinstance(event.get("content"), str):
+                    event["content"] = visible_text(event["content"])
             runs.append({"title": title, "task": task, "level": level, "document": document, "won": result.won, "blocked_by": result.blocked_by,
-                         "final": result.final, "events": result.events, "model": model, "scripted": False,
+                         "final": visible_text(result.final), "events": result.events, "model": model, "scripted": False,
                          "featured": attack_id == "A13" and level == 5,
-                         "firewall_off": {"won": off.won, "final": off.final, "outbox": off.outbox, "network": off.network, "model": model}})
+                         "firewall_off": {"won": off.won, "final": visible_text(off.final), "outbox": off.outbox, "network": off.network, "model": model}})
     return {"runs": runs}
 
 

@@ -12,6 +12,7 @@ from pathlib import Path
 import yaml
 
 from arena.agent import run_agent
+from arena.llm import visible_text
 from arena.service import POLICY, play
 from arena.world import World
 from atlas.firewall import Firewall
@@ -89,7 +90,7 @@ def draft_fix(bypass_document, level, drafter, llm, base=POLICY, benign=BENIGN, 
         {"role": "system", "content": DRAFT_PROMPT},
         {"role": "user", "content": json.dumps({"untrusted_document": bypass_document[:2000]})},
     ]
-    change = parse_change(drafter(messages, []).get("content"))
+    change = parse_change(visible_text(drafter(messages, []).get("content")))
     if change is None:
         return None
     data = apply_change(base.data, change)

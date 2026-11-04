@@ -1,10 +1,17 @@
 import os
+import re
 import time
 from pathlib import Path
 
 import httpx
 
 ENV_FILE = Path(__file__).parent.parent / ".env"
+_THINK = re.compile(r"<think>.*?(?:</think>|\Z)", re.S)
+
+
+def visible_text(text):
+    """Drops a thinking model's reasoning, including reasoning cut off before it closed."""
+    return _THINK.sub("", text or "").strip()
 
 
 class BudgetExceeded(Exception):

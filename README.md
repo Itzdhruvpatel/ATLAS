@@ -56,6 +56,10 @@ What this shows, and what it doesn't:
 
 The arena also ran on this real model through its API, for all 5 levels. The arena's public demo uses a clearly labelled scripted model, so it runs without an API key.
 
+The flight recordings on the site are real runs on this model. With the firewall off, the poisoned action items sent the fake key to the attacker. With it on, the origin check blocked that email. In the poisoned runbook the model emailed the attacker with the firewall off, but those emails didn't contain the key, so that run doesn't count as a leak.
+
+An agent also ran through the gateway's HTTP API: the attack sent no email and a normal task passed. That was one run of each.
+
 ### Paper question: first result
 
 Repeating the same attack in 1, 2 and 3 documents gave:
