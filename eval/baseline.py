@@ -12,7 +12,7 @@ import httpx
 from arena.agent import run_agent
 from arena.llm import BudgetExceeded, OpenAICompatLLM, api_key
 from arena.world import World
-from eval.scenarios import ATTACKS, BENIGN
+from eval.scenarios import ATTACKS, BENIGN, STRONG_ATTACKS
 
 REPORTS = Path(__file__).parent / "reports"
 
@@ -75,17 +75,19 @@ def main():
     parser.add_argument("--runs", type=int, default=3)
     parser.add_argument("--max-llm-calls", type=int, default=300)
     parser.add_argument("--timeout", type=float, default=60, help="seconds per LLM call; raise for local CPU models")
+    parser.add_argument("--suite", choices=["basic", "strong"], default="basic")
     args = parser.parse_args()
 
     llm = OpenAICompatLLM(args.base_url, api_key(), args.model, args.max_llm_calls, timeout=args.timeout)
-    report = evaluate(llm, ATTACKS, BENIGN, args.runs)
+    attacks, benign = (STRONG_ATTACKS, []) if args.suite == "strong" else (ATTACKS, BENIGN)
+    report = evaluate(llm, attacks, benign, args.runs)
     report.update(
-        model=args.model, temperature=llm.temperature, runs=args.runs,
+        suite=args.suite, model=args.model, temperature=llm.temperature, runs=args.runs,
         llm_calls=llm.calls, commit=git_commit(),
         finished=datetime.now(timezone.utc).isoformat(),
     )
     REPORTS.mkdir(exist_ok=True)
-    path = REPORTS / f"baseline-{re.sub(r'[^A-Za-z0-9._-]', '_', args.model)}-{report['commit']}.json"
+    path = REPORTS / f"baseline-{args.suite}-{re.sub(r'[^A-Za-z0-9._-]', '_', args.model)}-{report['commit']}.json"
     path.write_text(json.dumps(report, indent=2))
     print(f"{path}\nattack={report['attack'] and report['attack']['rate']} benign={report['benign'] and report['benign']['rate']} calls={llm.calls}")
 

@@ -13,7 +13,7 @@ def build(reports=REPORTS):
     for path in sorted(Path(reports).glob("baseline-*.json")):
         r = json.loads(path.read_text(encoding="utf-8"))
         if r.get("complete"):
-            runs.append({"model": r["model"], "config": "No firewall", "attack": r["attack"], "benign": r["benign"], "commit": r["commit"]})
+            runs.append({"model": r["model"], "config": "No firewall, harder attacks" if r.get("suite") == "strong" else "No firewall", "attack": r["attack"], "benign": r["benign"], "commit": r["commit"]})
     for path in sorted(Path(reports).glob("ablation-*.json")):
         r = json.loads(path.read_text(encoding="utf-8"))
         runs += [{"model": r["model"], "config": row["config"], "attack": row["attack"], "benign": row["benign"], "commit": r["commit"]} for row in r["rows"]]
