@@ -1,6 +1,5 @@
 import argparse
 import json
-import os
 import re
 import sys
 from datetime import datetime, timezone
@@ -8,7 +7,7 @@ from datetime import datetime, timezone
 import httpx
 
 from arena.agent import TOOLS, run_agent
-from arena.llm import BudgetExceeded, OpenAICompatLLM
+from arena.llm import BudgetExceeded, OpenAICompatLLM, api_key
 from arena.world import World
 from atlas.causal import attribute, untrusted_indexes
 from eval.baseline import REPORTS, git_commit
@@ -72,8 +71,7 @@ def main():
     parser.add_argument("--timeout", type=float, default=60, help="seconds per LLM call; raise for local CPU models")
     args = parser.parse_args()
 
-    # Local servers such as Ollama ignore the key, so it is optional here.
-    llm = OpenAICompatLLM(args.base_url, os.environ.get("ATLAS_LLM_API_KEY", "local"), args.model, args.max_llm_calls, timeout=args.timeout)
+    llm = OpenAICompatLLM(args.base_url, api_key(), args.model, args.max_llm_calls, timeout=args.timeout)
     try:
         report = spike(llm, [1, 2, 3], args.trials)
     except BudgetExceeded as e:

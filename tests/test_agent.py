@@ -2,7 +2,7 @@ import httpx
 import pytest
 
 from arena.agent import TOOLS, run_agent
-from arena.llm import BudgetExceeded, OpenAICompatLLM
+from arena.llm import BudgetExceeded, OpenAICompatLLM, api_key
 from arena.oracle import leaked
 from arena.world import World
 from tests.fake import EvilLLM, Scripted, calling, final
@@ -68,3 +68,13 @@ def test_llm_client_returns_message_from_response():
     llm = OpenAICompatLLM("https://x.test/v1", "k", "m", max_calls=1, transport=httpx.MockTransport(handler))
     assert llm([], [])["content"] == "hi"
     assert llm.calls == 1
+
+
+def test_api_key_prefers_environment_then_file(tmp_path, monkeypatch):
+    env_file = tmp_path / ".env"
+    monkeypatch.delenv("ATLAS_LLM_API_KEY", raising=False)
+    assert api_key(env_file) == "local"
+    env_file.write_text('OTHER=1\nATLAS_LLM_API_KEY="from-file"\n')
+    assert api_key(env_file) == "from-file"
+    monkeypatch.setenv("ATLAS_LLM_API_KEY", "from-env")
+    assert api_key(env_file) == "from-env"

@@ -84,6 +84,7 @@ export default function Readout({ events, player, title, note }) {
         <strong>{title}</strong>
         <span>{note}</span>
       </div>
+      <div className="readout-plot" tabIndex={0} role="group" aria-label="Attack plot, scrolls sideways on small screens">
       <svg viewBox={`0 0 ${WIDTH} ${height}`} role="img" aria-label="Plot of firewall events over the course of the attack">
         {data.map((_, i) => <line key={i} x1={x(i)} x2={x(i)} y1={TOP} y2={height - TOP} stroke="#c3cdc4" strokeWidth="1" />)}
         {ROWS.map(([key, label, kind, color], r) => {
@@ -98,6 +99,7 @@ export default function Readout({ events, player, title, note }) {
         })}
         <line x1={x(index)} x2={x(index)} y1={TOP - 6} y2={height - 4} stroke="#ff5a00" strokeWidth="3" />
       </svg>
+      </div>
       <div className="readout-foot">
         <button className="btn quiet" type="button" onClick={toggle}>{playing ? "Pause" : "Play"}</button>
         <input type="range" min="0" max={span} value={index} aria-label="Move through the attack, one event at a time"

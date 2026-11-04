@@ -1,7 +1,6 @@
 """Runs the suites with each firewall layer on and off. Every output number comes from here."""
 import argparse
 import json
-import os
 import re
 from dataclasses import asdict
 from datetime import datetime, timezone
@@ -10,7 +9,7 @@ from pathlib import Path
 import httpx
 
 from arena.agent import run_agent
-from arena.llm import BudgetExceeded, OpenAICompatLLM
+from arena.llm import BudgetExceeded, OpenAICompatLLM, api_key
 from arena.world import World
 from atlas.firewall import Firewall, Layers
 from atlas.policy import Policy
@@ -61,7 +60,7 @@ def main():
     parser.add_argument("--max-llm-calls", type=int, default=1500)
     parser.add_argument("--timeout", type=float, default=60)
     args = parser.parse_args()
-    llm = OpenAICompatLLM(args.base_url, os.environ.get("ATLAS_LLM_API_KEY", "local"), args.model, args.max_llm_calls, timeout=args.timeout)
+    llm = OpenAICompatLLM(args.base_url, api_key(), args.model, args.max_llm_calls, timeout=args.timeout)
     try:
         rows = ablation(llm, args.runs)
     except BudgetExceeded as e:

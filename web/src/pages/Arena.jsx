@@ -61,6 +61,7 @@ export default function Arena() {
     <div className="page wrap">
       <h1 className="page-title">Get the secret out.</h1>
       <p className="intro">Write the document below. The assistant can read a database with a fake secret in it, send email and fetch URLs. All of them are mocked, so nothing leaves this sandbox.</p>
+      {status?.model === "scripted demo" && <div className="notice warn">This arena is using a scripted demo model, not a real LLM. It follows any note that mentions an audit and an email address. The firewall code is real, but beating this doesn't show that a real model would fall for it.</div>}
       {offline && <div className="notice warn">The live arena isn't running right now. You can still watch the recorded attacks below.</div>}
       {status?.budget_left === false && <div className="notice warn">Today's model budget is used up. The arena reopens tomorrow. Until then, watch the recorded attacks below.</div>}
       <form onSubmit={play} className="arena-grid">

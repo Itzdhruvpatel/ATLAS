@@ -1,6 +1,5 @@
 import argparse
 import json
-import os
 import random
 import re
 import subprocess
@@ -11,7 +10,7 @@ from pathlib import Path
 import httpx
 
 from arena.agent import run_agent
-from arena.llm import BudgetExceeded, OpenAICompatLLM
+from arena.llm import BudgetExceeded, OpenAICompatLLM, api_key
 from arena.world import World
 from eval.scenarios import ATTACKS, BENIGN
 
@@ -75,8 +74,7 @@ def main():
     parser.add_argument("--timeout", type=float, default=60, help="seconds per LLM call; raise for local CPU models")
     args = parser.parse_args()
 
-    # Local servers such as Ollama ignore the key, so it is optional here.
-    llm = OpenAICompatLLM(args.base_url, os.environ.get("ATLAS_LLM_API_KEY", "local"), args.model, args.max_llm_calls, timeout=args.timeout)
+    llm = OpenAICompatLLM(args.base_url, api_key(), args.model, args.max_llm_calls, timeout=args.timeout)
     report = evaluate(llm, ATTACKS, BENIGN, args.runs)
     report.update(
         model=args.model, temperature=llm.temperature, runs=args.runs,

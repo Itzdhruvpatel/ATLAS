@@ -47,9 +47,10 @@ def record(llm, model, scripted):
     runs = []
     for level, title, document, featured in ATTACKS:
         result = play(level, document, llm)
+        off = play(1, document, llm)
         runs.append({"title": title, "level": level, "document": document, "won": result.won, "blocked_by": result.blocked_by,
                      "final": result.final, "events": result.events, "model": model, "scripted": scripted, "featured": featured,
-                     "firewall_off": None})
+                     "firewall_off": {"won": off.won, "final": off.final, "outbox": off.outbox, "network": off.network, "model": model}})
     return {"runs": runs}
 
 

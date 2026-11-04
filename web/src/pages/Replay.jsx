@@ -24,7 +24,7 @@ function FirewallOff({ replay, id }) {
       <h2 style={{ fontSize: "1.2rem" }}>Same document with the firewall off</h2>
       {result ? (
         <>
-          <p style={{ marginTop: 8 }}><b>{result.won ? "The secret leaked." : "The secret stayed put, even with no firewall."}</b> This is a real run on {result.model}, not a simulation.</p>
+          <p style={{ marginTop: 8 }}><b>{result.won ? "The secret leaked." : "The secret stayed put, even with no firewall."}</b> {result.model === "scripted demo" ? "This run used the same firewall code with a scripted demo model, not a real LLM." : `This is a real run on ${result.model}, not a simulation.`}</p>
           {result.outbox?.length > 0 && <p style={{ marginTop: 8, overflowWrap: "anywhere" }}>Email sent to {result.outbox.map((m) => String(m.to)).join(", ")}.</p>}
           {result.network?.length > 0 && <p style={{ marginTop: 8, overflowWrap: "anywhere" }}>Requests made: {result.network.join(", ")}.</p>}
         </>
@@ -57,6 +57,9 @@ export default function Replay({ id, recordingIndex }) {
   if (error) return <div className="page wrap"><h1 className="page-title">Nothing to replay.</h1><p className="intro">{error}</p><p style={{ marginTop: 16 }}><a className="btn" href="#/arena">Go to the arena</a></p></div>;
   if (!replay) return <div className="page wrap" role="status"><div className="running"><span className="tick" /> Loading the replay.</div></div>;
 
+  const scripted = replay.scripted || replay.model === "scripted demo";
+  const timed = events.length > 0 && events[events.length - 1].t_ms >= 1000;
+  const cleaned = events.some((e) => e.stage === "ingest");
   const share = async () => {
     await navigator.clipboard?.writeText(location.href);
     setCopied(true);
@@ -67,7 +70,7 @@ export default function Replay({ id, recordingIndex }) {
       <div className="row" style={{ justifyContent: "space-between" }}>
         <div>
           <h1 className="page-title">Level {replay.level}{replay.nickname && replay.nickname !== "anonymous" ? `, played by ${replay.nickname}` : ""}</h1>
-          <p className="intro">{replay.blocked_by ? `First stopped by the ${replay.blocked_by} layer.` : replay.won ? "No layer stopped it." : "The agent didn't act on the document."} Model: {replay.scripted ? "scripted demo, not a real LLM" : replay.model}.</p>
+          <p className="intro">{replay.blocked_by ? `First stopped by the ${replay.blocked_by} layer.` : replay.won ? "No layer stopped it." : cleaned ? "The clean room removed the instruction before the agent saw it." : "The agent didn't act on the document."} Model: {scripted ? "scripted demo, not a real LLM" : replay.model}.</p>
         </div>
         <span className={`verdict ${replay.won ? "won" : "held"}`}>{replay.won ? "Secret leaked" : "Secret held"}</span>
       </div>
@@ -89,7 +92,7 @@ export default function Replay({ id, recordingIndex }) {
                 {events.map((e, i) => (
                   <li key={i}>
                     <button type="button" className={i === player.index ? "now" : ""} onClick={() => player.setIndex(i)} aria-current={i === player.index ? "step" : undefined}>
-                      <span className="when">{(e.t_ms / 1000).toFixed(1)}s</span>
+                      <span className="when">{timed ? `${(e.t_ms / 1000).toFixed(1)}s` : `Step ${i + 1}`}</span>
                       <span>{describe(e).head}</span>
                     </button>
                   </li>

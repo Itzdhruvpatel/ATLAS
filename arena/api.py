@@ -1,4 +1,7 @@
-"""Public arena API. Every limit here exists because this endpoint spends real LLM money."""
+"""Public arena API. Every limit here exists because this endpoint spends real LLM money.
+
+Run with: uvicorn --factory arena.api:main_app
+"""
 import hashlib
 import hmac
 import json
@@ -15,6 +18,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
 
 from arena.llm import BudgetExceeded, OpenAICompatLLM
+from arena.record import scripted_victim
 from arena.service import LEVELS, MAX_DOCUMENT, USER_TASK, clean_nickname, play
 from atlas.trace import TraceStore
 
@@ -183,10 +187,14 @@ def create_app(store, llm, limits, admin_key="", model="unknown", trust_proxy=Fa
 
 def main_app():
     store = TraceStore(os.environ.get("ATLAS_DB", str(ROOT / "arena.db")))
-    model = os.environ["ATLAS_ARENA_MODEL"]
-    # The call cap lives in Limits, which survives restarts, so the client cap is only a backstop.
-    llm = OpenAICompatLLM(os.environ["ATLAS_ARENA_URL"], os.environ.get("ATLAS_ARENA_KEY", "local"), model,
-                          max_calls=10**9, timeout=float(os.environ.get("ATLAS_ARENA_TIMEOUT", 120)))
+    model = os.environ.get("ATLAS_ARENA_MODEL", "scripted demo")
+    if model == "scripted demo":
+        # No key needed. The site labels these rounds as scripted, not real LLM results.
+        llm = scripted_victim
+    else:
+        # The call cap lives in Limits, which survives restarts, so the client cap is only a backstop.
+        llm = OpenAICompatLLM(os.environ["ATLAS_ARENA_URL"], os.environ.get("ATLAS_ARENA_KEY", "local"), model,
+                              max_calls=10**9, timeout=float(os.environ.get("ATLAS_ARENA_TIMEOUT", 120)))
     limits = Limits(store, int(os.environ.get("ATLAS_ROUNDS_PER_HOUR", 10)), int(os.environ.get("ATLAS_CALLS_PER_DAY", 500)),
                     os.environ.get("ATLAS_VISITOR_SALT", "").encode() or None)
     return create_app(store, llm, limits, os.environ.get("ATLAS_ADMIN_KEY", ""), model,
