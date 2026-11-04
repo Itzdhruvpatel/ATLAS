@@ -146,10 +146,6 @@ def create_app(store, llm, limits, admin_key="", model="unknown", trust_proxy=Fa
         store.set_firewall_off(replay_id, data)
         return data
 
-    @app.get("/api/gallery")
-    def gallery():
-        return store.gallery()
-
     @app.get("/api/leaderboard")
     def leaderboard():
         return store.leaderboard()

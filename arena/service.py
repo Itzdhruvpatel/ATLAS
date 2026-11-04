@@ -40,11 +40,11 @@ def _first_block(events):
     return next((e["layer"] for e in events if e["stage"] == "block"), None)
 
 
-def play(level, document, llm):
+def play(level, document, llm, policy=POLICY):
     """Runs one arena round through the firewall core. All tools are mocked."""
     layers = LEVELS[level][2]
     world = World(documents={"report": document[:MAX_DOCUMENT]})
-    firewall = Firewall(POLICY, layers, llm=llm)
+    firewall = Firewall(policy, layers, llm=llm)
     run = run_agent(lambda messages, tools: firewall.complete("round", messages, tools, llm), world, USER_TASK)
     events = firewall.session("round").events
     return Round(leaked(world), _first_block(events), run.final, events, world.outbox, world.network_log, world.flag)

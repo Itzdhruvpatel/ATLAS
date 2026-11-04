@@ -76,6 +76,8 @@ def check_url(url, rules, resolver=None):
     allow = rules.get("hosts_allow")
     if allow is not None and not host_allowed(host, allow):
         problems.append(f"url: host {host} is not on the allowlist")
+    if host_allowed(host, rules.get("hosts_deny", [])):
+        problems.append(f"url: host {host} is denied")
     query = f"{parts.query}{parts.path}"
     if len(query) > rules.get("max_query_len", 200):
         problems.append("url: path and query too long")
@@ -103,12 +105,15 @@ def check_email(to, rules):
     recipients = to if isinstance(to, list) else [to]
     problems = []
     allow = rules.get("recipient_domains_allow")
+    deny = rules.get("recipient_domains_deny", [])
     for recipient in recipients:
         address = str(recipient).strip().lower()
         if address.count("@") != 1 or "." not in address.split("@")[1]:
             problems.append("email: malformed recipient")
         elif allow is not None and address.split("@")[1] not in allow:
             problems.append(f"email: domain of {address} is not allowed")
+        elif host_allowed(address.split("@")[1], deny):
+            problems.append(f"email: domain of {address} is denied")
     return problems
 
 

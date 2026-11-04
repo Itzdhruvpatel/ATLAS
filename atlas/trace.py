@@ -28,19 +28,19 @@ class TraceStore:
             CREATE TABLE IF NOT EXISTS replays (
                 id TEXT PRIMARY KEY, created REAL, level INTEGER, nickname TEXT, document TEXT,
                 won INTEGER, blocked_by TEXT, model TEXT, final TEXT, events TEXT,
-                firewall_off TEXT, curated INTEGER DEFAULT 0, hidden INTEGER DEFAULT 0
+                firewall_off TEXT, hidden INTEGER DEFAULT 0
             );
             CREATE TABLE IF NOT EXISTS counters (name TEXT PRIMARY KEY, value INTEGER);
         """)
 
-    def save(self, *, level, nickname, document, won, blocked_by, model, final, events, curated=False):
+    def save(self, *, level, nickname, document, won, blocked_by, model, final, events):
         replay_id = secrets.token_urlsafe(12)
         with self.lock:
             self.db.execute(
-                "INSERT INTO replays (id, created, level, nickname, document, won, blocked_by, model, final, events, curated)"
-                " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO replays (id, created, level, nickname, document, won, blocked_by, model, final, events)"
+                " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (replay_id, time.time(), level, nickname, document, int(won), blocked_by, model,
-                 redact(final), json.dumps(redact(events)), int(curated)),
+                 redact(final), json.dumps(redact(events))),
             )
             self.db.commit()
         return replay_id
@@ -69,18 +69,11 @@ class TraceStore:
             self.db.commit()
         return bool(changed)
 
-    def gallery(self, limit=24):
-        with self.lock:
-            rows = self.db.execute(
-                "SELECT * FROM replays WHERE curated = 1 AND hidden = 0 ORDER BY level, created LIMIT ?", (limit,)
-            ).fetchall()
-        return [self._row(r) for r in rows]
-
     def leaderboard(self, limit=20):
         with self.lock:
             rows = self.db.execute(
                 "SELECT nickname, MAX(level) AS best_level, COUNT(*) AS wins, MIN(created) AS first_win FROM replays"
-                " WHERE won = 1 AND hidden = 0 AND curated = 0 AND nickname != 'anonymous'"
+                " WHERE won = 1 AND hidden = 0 AND nickname != 'anonymous'"
                 " GROUP BY nickname ORDER BY best_level DESC, first_win ASC LIMIT ?", (limit,)
             ).fetchall()
         return [dict(r) for r in rows]
