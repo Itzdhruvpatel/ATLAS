@@ -59,7 +59,7 @@ function short(text, n = 180) {
 
 export function describe(e) {
   switch (e?.stage) {
-    case "tool_result": return { head: e.trust === "T3" ? `Agent read from ${e.tool}` : `${e.tool} returned`, body: e.trust === "T3" ? `Untrusted text entered the agent's context: ${short(e.text)}` : short(e.text) };
+    case "tool_result": return { head: e.tool === "read_document" ? "Agent read the document" : e.trust === "T3" ? `Agent read from ${e.tool}` : `${e.tool} returned`, body: e.trust === "T3" ? `Untrusted text entered the agent's context: ${short(e.text)}` : short(e.text) };
     case "ingest": return { head: "Firewall cleaned the text", body: `Found ${e.signals.join(", ")}. Removed: ${short(e.removed.join(" "))}` };
     case "llm": return { head: "Model replied", body: e.calls.length ? `It wants to call ${e.calls.join(", ")}.` : short(e.content) || "It sent an empty reply." };
     case "allow": return { head: `Firewall allowed ${e.tool}`, body: short(e.arguments) };
