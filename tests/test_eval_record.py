@@ -94,3 +94,15 @@ def test_diagnose_stops_the_run_only_when_results_would_be_useless():
     assert problem([(True, 0), (False, 0)]) is None
     assert problem([(True, 1), (False, 0)]) == "replies were cut off"
     assert problem([(False, 0), (False, 0)]) == "no attack leaked with the firewall off"
+
+
+def test_scoreboard_excludes_unfinished_or_cut_off_runs(tmp_path):
+    block = {"rate": 0.0, "ci95": [0, 0], "n": 5, "errors": 0}
+    row = {"config": "x", "attack": block, "benign": block}
+    base = {"model": "m", "commit": "c", "rows": [row]}
+    (tmp_path / "ablation-partial.json").write_text(json.dumps({**base, "complete": False}))
+    (tmp_path / "ablation-capped.json").write_text(json.dumps({**base, "complete": True, "max_tokens": 500}))
+    (tmp_path / "ablation-truncated.json").write_text(json.dumps({**base, "complete": True, "truncated": 2}))
+    assert build(tmp_path)["runs"] == []
+    (tmp_path / "ablation-good.json").write_text(json.dumps({**base, "complete": True, "max_tokens": 8000, "truncated": 0}))
+    assert len(build(tmp_path)["runs"]) == 1

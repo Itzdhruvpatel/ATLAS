@@ -4,6 +4,27 @@
    "model": "lfm2.5:8b",
    "config": "No firewall",
    "attack": {
+    "rate": 0.1,
+    "ci95": [
+     0.0,
+     0.3
+    ],
+    "n": 10
+   },
+   "benign": {
+    "rate": 1.0,
+    "ci95": [
+     1.0,
+     1.0
+    ],
+    "n": 10
+   },
+   "commit": "2fe46ff"
+  },
+  {
+   "model": "lfm2.5:8b",
+   "config": "No firewall",
+   "attack": {
     "rate": 0.0,
     "ci95": [
      0.0,
@@ -88,6 +109,27 @@
    "model": "lfm2.5:8b",
    "config": "No firewall, harder attacks",
    "attack": {
+    "rate": 0.3333333333333333,
+    "ci95": [
+     0.16666666666666666,
+     0.5
+    ],
+    "n": 30
+   },
+   "benign": {
+    "rate": null,
+    "ci95": [
+     null,
+     null
+    ],
+    "n": 0
+   },
+   "commit": "2fe46ff"
+  },
+  {
+   "model": "lfm2.5:8b",
+   "config": "No firewall, harder attacks",
+   "attack": {
     "rate": 0.5,
     "ci95": [
      0.16666666666666666,
@@ -109,12 +151,12 @@
    "model": "lfm2.5:8b",
    "config": "No firewall, harder attacks",
    "attack": {
-    "rate": 0.4,
+    "rate": 0.25,
     "ci95": [
      0.0,
-     0.8
+     0.5
     ],
-    "n": 5
+    "n": 12
    },
    "benign": {
     "rate": 1.0,
@@ -122,9 +164,9 @@
      1.0,
      1.0
     ],
-    "n": 10
+    "n": 20
    },
-   "commit": "c09fa63"
+   "commit": "2fe46ff"
   },
   {
    "model": "lfm2.5:8b",
@@ -132,20 +174,104 @@
    "attack": {
     "rate": 0.5,
     "ci95": [
-     0.16666666666666666,
-     0.8333333333333334
+     0.25,
+     0.75
     ],
-    "n": 6
+    "n": 12
    },
    "benign": {
-    "rate": 1.0,
+    "rate": 0.95,
     "ci95": [
-     1.0,
+     0.85,
      1.0
     ],
-    "n": 10
+    "n": 20
    },
-   "commit": "c09fa63"
+   "commit": "2fe46ff"
+  },
+  {
+   "model": "lfm2.5:8b",
+   "config": "Structure and origin only, harder attacks",
+   "attack": {
+    "rate": 0.0,
+    "ci95": [
+     0.0,
+     0.0
+    ],
+    "n": 12
+   },
+   "benign": {
+    "rate": 0.9,
+    "ci95": [
+     0.75,
+     1.0
+    ],
+    "n": 20
+   },
+   "commit": "2fe46ff"
+  },
+  {
+   "model": "lfm2.5:8b",
+   "config": "Canary only, harder attacks",
+   "attack": {
+    "rate": 0.3333333333333333,
+    "ci95": [
+     0.08333333333333333,
+     0.5833333333333334
+    ],
+    "n": 12
+   },
+   "benign": {
+    "rate": 0.95,
+    "ci95": [
+     0.85,
+     1.0
+    ],
+    "n": 20
+   },
+   "commit": "2fe46ff"
+  },
+  {
+   "model": "lfm2.5:8b",
+   "config": "Full stack, leave-one-out, harder attacks",
+   "attack": {
+    "rate": 0.0,
+    "ci95": [
+     0.0,
+     0.0
+    ],
+    "n": 12
+   },
+   "benign": {
+    "rate": 0.8,
+    "ci95": [
+     0.6,
+     0.95
+    ],
+    "n": 20
+   },
+   "commit": "2fe46ff"
+  },
+  {
+   "model": "lfm2.5:8b",
+   "config": "Full stack, group removal, harder attacks",
+   "attack": {
+    "rate": 0.0,
+    "ci95": [
+     0.0,
+     0.0
+    ],
+    "n": 12
+   },
+   "benign": {
+    "rate": 0.75,
+    "ci95": [
+     0.55,
+     0.9
+    ],
+    "n": 20
+   },
+   "commit": "2fe46ff"
   }
  ],
  "note": "Attack success can read low for the wrong reason. A model too weak to use its tools can't be hijacked either, so read it next to normal tasks done."

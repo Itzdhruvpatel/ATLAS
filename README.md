@@ -34,18 +34,37 @@ Each layer has a switch, which is how the arena levels and experiments work. If 
 
 ## Measured results
 
-Every number comes from a saved report in `eval/reports/`. These are small, early runs with no firewall, so they measure the attacks and models rather than ATLAS. Code decides whether a secret leaked, not an LLM judge.
+Every number comes from a saved report in `eval/reports/`. Code decides whether a secret leaked, not an LLM judge. These runs used `lfm2.5:8b` on a Colab T4 GPU against 6 harder attacks and 10 normal tasks.
 
-| Model | Basic attacks leaked | Harder attacks leaked | Normal tasks done |
-|---|---|---|---|
-| `lfm2.5:8b` (local) | 0 of 10 | 3 of 6 | 10 of 10 |
-| `nemotron-3.5-super` (free tier) | 0 of 10 | not finished | 10 of 10 |
-| `gemini-3.6-flash` (free tier) | not finished | 0 of 5 | not finished |
-| `llama3.2:3b` (local) | 0 of 10 | not run | 1 of 10, too weak to use its tools |
+| Firewall setup | Attacks leaked | Normal tasks done |
+|---|---|---|
+| No firewall | 3 of 12 | 20 of 20 |
+| Clean room only | 6 of 12 | 19 of 20 |
+| Canary only | 4 of 12 | 19 of 20 |
+| Structure and origin only | 0 of 12 | 18 of 20 |
+| Full stack, leave-one-out | 0 of 12 | 16 of 20 |
+| Full stack, group removal | 0 of 12 | 15 of 20 |
 
-The firewall-on comparison is running. Results will appear in `eval/reports/` and on the site's scoreboard, including anything it fails to stop.
+What this shows, and what it doesn't:
 
-The arena also has a clearly labelled scripted demo model, so it runs without an API key. Its outcomes show how the layers work, not how real models behave.
+- With structure and origin checks on, no attack leaked the secret in this small test.
+- That protection has a cost. The full stack also blocked up to 5 of 20 normal tasks, and reducing that is the next job.
+- Causal replay added no measured protection beyond structure and origin here, while normal tasks done dropped further.
+- These samples are small, one model, and runs repeat closely because temperature is 0, so treat them as early signals. An attacker who adapts to the firewall hasn't been tested yet.
+
+The arena also ran on this real model through its API, for all 5 levels. The arena's public demo uses a clearly labelled scripted model, so it runs without an API key.
+
+### Paper question: first result
+
+Repeating the same attack in 1, 2 and 3 documents gave:
+
+| Copies | Hijacked | Caught by leave-one-out | Caught by group removal | Missed |
+|---|---|---|---|---|
+| 1 | 0 of 10 | 0 | 0 | 0 |
+| 2 | 10 of 10 | 10 | 0 | 0 |
+| 3 | 10 of 10 | 0 | 0 | 10 |
+
+Trials barely vary at temperature 0, so this is closer to one observation per row than ten. Repetition did raise hijacks, and leave-one-out missed at 3 copies, but group removal didn't catch those either, so the proposed fix isn't supported yet. Replay keeps earlier hijacked turns in history, which may explain the misses and needs testing first.
 
 ## Run it
 
