@@ -99,9 +99,10 @@ class Firewall:
                 session.provenance.add(text, trust, f"{tool}#{i}")
                 session.log("tool_result", tool=tool, trust=trust, text=str(text)[:600])
         session.seen = len(messages)
-        if self.layers.canary:
+        # Security text only goes in once untrusted text has, so plain tasks see an unchanged prompt.
+        if self.layers.canary and session.provenance.tainted:
             self._plant_canary(session, context)
-        if self.layers.ingest:
+        if self.layers.ingest and session.provenance.tainted:
             self._spotlight(context, names)
         return context
 
@@ -142,7 +143,9 @@ class Firewall:
                 return ("origin", problems)
         if self.layers.canary and hits(json.dumps(args), session.canary):
             return ("canary", ["canary: planted secret found in tool arguments"])
-        if self.layers.causal and llm and self.policy.is_egress(name) and session.provenance.tainted:
+        # Influence is not authority: replay only questions destinations the user or operator didn't choose.
+        if (self.layers.causal and llm and self.policy.is_egress(name) and session.provenance.tainted
+                and not self.policy.destination_authorized(name, args, session.provenance)):
             return self._causal(session, call, context, tools, llm)
         return None
 

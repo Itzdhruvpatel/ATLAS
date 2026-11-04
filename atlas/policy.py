@@ -76,6 +76,18 @@ class Policy:
             return check_path(value, rules)
         return []
 
+    def destination_authorized(self, tool, args, provenance):
+        """True when every destination came from the user or operator, so a document can only have shaped the content."""
+        required = self.tools.get(tool, {}).get("arg_origin_required", {})
+        if not required:
+            return False
+        for arg in required:
+            values = args.get(arg, [])
+            values = values if isinstance(values, list) else [values]
+            if not values or any(provenance.origin(v)[0] not in ("T0", "T1") for v in values):
+                return False
+        return True
+
     def check_origin(self, tool, args, provenance):
         rules = self.tools.get(tool, {})
         problems = []

@@ -27,6 +27,8 @@ CONFIGS = {
     "Full stack, group removal": Layers(),
 }
 
+RETEST_CONFIGS = {k: CONFIGS[k] for k in ("Structure and origin only", "Full stack, leave-one-out", "Full stack, group removal")}
+
 
 def run_scenario(scenario, llm, layers, policy=POLICY, replay_runs=1):
     world = World(documents=scenario.documents, pages=scenario.pages)
@@ -36,16 +38,17 @@ def run_scenario(scenario, llm, layers, policy=POLICY, replay_runs=1):
 
 
 def suite(scenarios, llm, layers, runs):
-    outcomes, errors = [], 0
+    outcomes, errors, per_scenario = [], 0, {}
     for scenario in scenarios:
         for _ in range(runs):
             try:
                 outcomes.append(run_scenario(scenario, llm, layers))
+                per_scenario.setdefault(scenario.id, []).append(outcomes[-1])
                 print(f"  {scenario.id}: {outcomes[-1]}", flush=True)
             except httpx.HTTPError:
                 errors += 1
     low, high = bootstrap_ci(outcomes)
-    return {"rate": sum(outcomes) / len(outcomes) if outcomes else None, "ci95": [low, high], "n": len(outcomes), "errors": errors}
+    return {"rate": sum(outcomes) / len(outcomes) if outcomes else None, "ci95": [low, high], "n": len(outcomes), "errors": errors, "per_scenario": per_scenario}
 
 
 def ablation(llm, runs=1, configs=CONFIGS, attacks=ATTACKS, benign=BENIGN):
@@ -65,6 +68,7 @@ def main():
     parser.add_argument("--max-llm-calls", type=int, default=1500)
     parser.add_argument("--timeout", type=float, default=60)
     parser.add_argument("--suite", choices=["basic", "strong"], default="basic")
+    parser.add_argument("--only-firewall-on", action="store_true", help="skip single-layer setups to save GPU time")
     args = parser.parse_args()
     llm = OpenAICompatLLM(args.base_url, api_key(), args.model, args.max_llm_calls, timeout=args.timeout)
     attacks = STRONG_ATTACKS if args.suite == "strong" else ATTACKS
@@ -72,7 +76,7 @@ def main():
     path = REPORTS / f"ablation-{args.suite}-{re.sub(r'[^A-Za-z0-9._-]', '_', args.model)}-{report['commit']}.json"
     # Saved after each config, because CPU runs take hours and can be interrupted.
     try:
-        for row in ablation_rows(llm, args.runs, CONFIGS, attacks, BENIGN):
+        for row in ablation_rows(llm, args.runs, RETEST_CONFIGS if args.only_firewall_on else CONFIGS, attacks, BENIGN):
             report["rows"].append(row)
             report.update(llm_calls=llm.calls, truncated=llm.truncated, finished=datetime.now(timezone.utc).isoformat())
             path.write_text(json.dumps(report, indent=2), encoding="utf-8")
