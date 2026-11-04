@@ -14,7 +14,7 @@ from arena.world import World
 from atlas.firewall import Firewall, Layers
 from atlas.policy import Policy
 from eval.baseline import REPORTS, bootstrap_ci, git_commit
-from eval.scenarios import ATTACKS, BENIGN
+from eval.scenarios import ATTACKS, BENIGN, STRONG_ATTACKS
 
 POLICY = Policy.load(Path(__file__).parent.parent / "policies" / "arena.yaml")
 _OFF = dict(ingest=False, structure=False, origin=False, canary=False, causal=False, group_removal=False)
@@ -48,8 +48,12 @@ def suite(scenarios, llm, layers, runs):
 
 
 def ablation(llm, runs=1, configs=CONFIGS, attacks=ATTACKS, benign=BENIGN):
-    return [{"config": name, "layers": asdict(layers), "attack": suite(attacks, llm, layers, runs), "benign": suite(benign, llm, layers, runs)}
-            for name, layers in configs.items()]
+    return list(ablation_rows(llm, runs, configs, attacks, benign))
+
+
+def ablation_rows(llm, runs, configs, attacks, benign):
+    for name, layers in configs.items():
+        yield {"config": name, "layers": asdict(layers), "attack": suite(attacks, llm, layers, runs), "benign": suite(benign, llm, layers, runs)}
 
 
 def main():
@@ -59,19 +63,24 @@ def main():
     parser.add_argument("--runs", type=int, default=1)
     parser.add_argument("--max-llm-calls", type=int, default=1500)
     parser.add_argument("--timeout", type=float, default=60)
+    parser.add_argument("--suite", choices=["basic", "strong"], default="basic")
     args = parser.parse_args()
     llm = OpenAICompatLLM(args.base_url, api_key(), args.model, args.max_llm_calls, timeout=args.timeout)
+    attacks = STRONG_ATTACKS if args.suite == "strong" else ATTACKS
+    report = {"suite": args.suite, "model": args.model, "commit": git_commit(), "complete": False, "replay_runs": 1, "rows": []}
+    path = REPORTS / f"ablation-{args.suite}-{re.sub(r'[^A-Za-z0-9._-]', '_', args.model)}-{report['commit']}.json"
+    # Saved after each config, because CPU runs take hours and can be interrupted.
     try:
-        rows = ablation(llm, args.runs)
+        for row in ablation_rows(llm, args.runs, CONFIGS, attacks, BENIGN):
+            report["rows"].append(row)
+            report.update(llm_calls=llm.calls, finished=datetime.now(timezone.utc).isoformat())
+            path.write_text(json.dumps(report, indent=2), encoding="utf-8")
+            print(row["config"], "attack", row["attack"]["rate"], "benign", row["benign"]["rate"], "calls", llm.calls, flush=True)
     except BudgetExceeded as e:
-        raise SystemExit(f"Stopped: {e}. No report written; raise the cap.")
-    report = {"model": args.model, "commit": git_commit(), "llm_calls": llm.calls, "rows": rows,
-              "finished": datetime.now(timezone.utc).isoformat()}
-    path = REPORTS / f"ablation-{re.sub(r'[^A-Za-z0-9._-]', '_', args.model)}-{report['commit']}.json"
+        raise SystemExit(f"Stopped: {e}. Finished configs are saved in {path}.")
+    report["complete"] = True
     path.write_text(json.dumps(report, indent=2), encoding="utf-8")
     print(path)
-    for row in rows:
-        print(row["config"], "attack", row["attack"]["rate"], "benign", row["benign"]["rate"])
 
 
 if __name__ == "__main__":
