@@ -24,12 +24,13 @@ def api_key(env_file=ENV_FILE):
 
 
 class OpenAICompatLLM:
-    def __init__(self, base_url, api_key, model, max_calls, temperature=0.0, transport=None, timeout=60, retry_wait=20):
+    def __init__(self, base_url, api_key, model, max_calls, temperature=0.0, transport=None, timeout=60, retry_wait=20, max_tokens=500):
         self.model = model
         self.max_calls = max_calls
         self.temperature = temperature
         self.calls = 0
         self.retry_wait = retry_wait
+        self.max_tokens = max_tokens
         self.client = httpx.Client(
             base_url=base_url,
             headers={"Authorization": f"Bearer {api_key}"},
@@ -41,7 +42,7 @@ class OpenAICompatLLM:
         if self.calls >= self.max_calls:
             raise BudgetExceeded(f"hit cap of {self.max_calls} LLM calls")
         self.calls += 1
-        body = {"model": self.model, "messages": messages, "tools": tools, "temperature": self.temperature}
+        body = {"model": self.model, "messages": messages, "tools": tools, "temperature": self.temperature, "max_tokens": self.max_tokens}
         for attempt in range(3):
             response = self.client.post("/chat/completions", json=body)
             if response.status_code not in (429, 503) or attempt == 2:

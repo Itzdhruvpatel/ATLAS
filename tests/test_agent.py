@@ -1,3 +1,5 @@
+import json
+
 import httpx
 import pytest
 
@@ -63,6 +65,7 @@ def test_llm_client_returns_message_from_response():
     def handler(request):
         assert request.headers["authorization"] == "Bearer k"
         assert str(request.url) == "https://x.test/v1/chat/completions"
+        assert json.loads(request.content)["max_tokens"] == 500
         return httpx.Response(200, json={"choices": [{"message": {"role": "assistant", "content": "hi"}}]})
 
     llm = OpenAICompatLLM("https://x.test/v1", "k", "m", max_calls=1, transport=httpx.MockTransport(handler))

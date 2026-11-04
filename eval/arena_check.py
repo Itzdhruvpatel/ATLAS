@@ -25,6 +25,7 @@ def check(llm, model, document=None, trials=1):
             response = client.post("/api/rounds", json={"level": level, "document": document, "consent": True})
             body = response.json()
             rows.append({"level": level, "status": response.status_code, "won": body.get("won"), "blocked_by": body.get("blocked_by")})
+            print(rows[-1], flush=True)
     return rows
 
 
@@ -38,12 +39,10 @@ def main():
     args = parser.parse_args()
     llm = OpenAICompatLLM(args.base_url, api_key(), args.model, args.max_llm_calls, timeout=args.timeout)
     rows = check(llm, args.model, trials=args.trials)
-    report = {"model": args.model, "commit": git_commit(), "llm_calls": llm.calls, "rows": rows}
+    report = {"model": args.model, "max_tokens": llm.max_tokens, "commit": git_commit(), "llm_calls": llm.calls, "rows": rows}
     path = REPORTS / f"arena-check-{re.sub(r'[^A-Za-z0-9._-]', '_', args.model)}-{report['commit']}.json"
     path.write_text(json.dumps(report, indent=2), encoding="utf-8")
     print(path)
-    for row in rows:
-        print(row)
 
 
 if __name__ == "__main__":

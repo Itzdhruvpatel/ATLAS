@@ -56,6 +56,7 @@ def spike(llm, ks, trials, runs=3):
         for _ in range(trials):
             try:
                 _record(tally, scenario, llm, k, runs)
+                print(f"k={k} {tally}", flush=True)
             except httpx.HTTPError as e:
                 print(f"k={k}: {e}", file=sys.stderr)
                 tally["errors"] += 1
@@ -77,7 +78,7 @@ def main():
     except BudgetExceeded as e:
         print(f"Stopped: {e}. No report written; raise the cap or lower trials.", file=sys.stderr)
         raise SystemExit(1)
-    report.update(complete=True, model=args.model, llm_calls=llm.calls, commit=git_commit(),
+    report.update(complete=True, model=args.model, max_tokens=llm.max_tokens, llm_calls=llm.calls, commit=git_commit(),
                   finished=datetime.now(timezone.utc).isoformat())
     REPORTS.mkdir(exist_ok=True)
     path = REPORTS / f"h1-spike-{re.sub(r'[^A-Za-z0-9._-]', '_', args.model)}-{report['commit']}.json"

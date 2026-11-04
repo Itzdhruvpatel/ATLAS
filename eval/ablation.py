@@ -41,6 +41,7 @@ def suite(scenarios, llm, layers, runs):
         for _ in range(runs):
             try:
                 outcomes.append(run_scenario(scenario, llm, layers))
+                print(f"  {scenario.id}: {outcomes[-1]}", flush=True)
             except httpx.HTTPError:
                 errors += 1
     low, high = bootstrap_ci(outcomes)
@@ -67,7 +68,7 @@ def main():
     args = parser.parse_args()
     llm = OpenAICompatLLM(args.base_url, api_key(), args.model, args.max_llm_calls, timeout=args.timeout)
     attacks = STRONG_ATTACKS if args.suite == "strong" else ATTACKS
-    report = {"suite": args.suite, "model": args.model, "commit": git_commit(), "complete": False, "replay_runs": 1, "rows": []}
+    report = {"suite": args.suite, "model": args.model, "commit": git_commit(), "complete": False, "replay_runs": 1, "max_tokens": llm.max_tokens, "rows": []}
     path = REPORTS / f"ablation-{args.suite}-{re.sub(r'[^A-Za-z0-9._-]', '_', args.model)}-{report['commit']}.json"
     # Saved after each config, because CPU runs take hours and can be interrupted.
     try:

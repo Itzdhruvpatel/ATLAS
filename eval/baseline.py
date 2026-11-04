@@ -37,6 +37,7 @@ def _run_suite(llm, scenarios, runs):
                 errors += 1
                 continue
             outcomes.append(result)
+            print(f"{scenario.id}: {result}", flush=True)
             per_scenario.setdefault(scenario.id, []).append(result)
     low, high = bootstrap_ci(outcomes)
     return {
@@ -82,7 +83,7 @@ def main():
     attacks, benign = (STRONG_ATTACKS, []) if args.suite == "strong" else (ATTACKS, BENIGN)
     report = evaluate(llm, attacks, benign, args.runs)
     report.update(
-        suite=args.suite, model=args.model, temperature=llm.temperature, runs=args.runs,
+        suite=args.suite, model=args.model, temperature=llm.temperature, max_tokens=llm.max_tokens, runs=args.runs,
         llm_calls=llm.calls, commit=git_commit(),
         finished=datetime.now(timezone.utc).isoformat(),
     )
