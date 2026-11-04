@@ -24,13 +24,14 @@ def api_key(env_file=ENV_FILE):
 
 
 class OpenAICompatLLM:
-    def __init__(self, base_url, api_key, model, max_calls, temperature=0.0, transport=None, timeout=60, retry_wait=20, max_tokens=500):
+    def __init__(self, base_url, api_key, model, max_calls, temperature=0.0, transport=None, timeout=60, retry_wait=20, max_tokens=3000):
         self.model = model
         self.max_calls = max_calls
         self.temperature = temperature
         self.calls = 0
         self.retry_wait = retry_wait
         self.max_tokens = max_tokens
+        self.truncated = 0
         self.client = httpx.Client(
             base_url=base_url,
             headers={"Authorization": f"Bearer {api_key}"},
@@ -50,4 +51,8 @@ class OpenAICompatLLM:
             # Rate limits and busy models usually clear after a short wait.
             time.sleep(self.retry_wait * (attempt + 1))
         response.raise_for_status()
-        return response.json()["choices"][0]["message"]
+        choice = response.json()["choices"][0]
+        # A cut-off reply can look like the model resisting an attack, so reports must show how many there were.
+        if choice.get("finish_reason") == "length":
+            self.truncated += 1
+        return choice["message"]

@@ -21,7 +21,7 @@ def main():
     parser.add_argument("--model", required=True)
     parser.add_argument("--ids", default="A11,A13,A15")
     parser.add_argument("--trials", type=int, default=2)
-    parser.add_argument("--caps", default="500,8192")
+    parser.add_argument("--caps", default="3000")
     args = parser.parse_args()
     wanted = [s for s in STRONG_ATTACKS if s.id in args.ids.split(",")]
     for cap in map(int, args.caps.split(",")):
@@ -29,7 +29,7 @@ def main():
             for trial in range(args.trials):
                 llm = OpenAICompatLLM(args.base_url, api_key(), args.model, 12, timeout=300, max_tokens=cap)
                 won, tools, final = trace(llm, scenario)
-                print(f"cap={cap} {scenario.id}#{trial} leaked={won} calls={llm.calls} tools={tools} final={final!r}", flush=True)
+                print(f"cap={cap} {scenario.id}#{trial} leaked={won} calls={llm.calls} truncated={llm.truncated} tools={tools} final={final!r}", flush=True)
 
 
 if __name__ == "__main__":

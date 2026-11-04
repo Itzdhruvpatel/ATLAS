@@ -74,7 +74,7 @@ def main():
     try:
         for row in ablation_rows(llm, args.runs, CONFIGS, attacks, BENIGN):
             report["rows"].append(row)
-            report.update(llm_calls=llm.calls, finished=datetime.now(timezone.utc).isoformat())
+            report.update(llm_calls=llm.calls, truncated=llm.truncated, finished=datetime.now(timezone.utc).isoformat())
             path.write_text(json.dumps(report, indent=2), encoding="utf-8")
             print(row["config"], "attack", row["attack"]["rate"], "benign", row["benign"]["rate"], "calls", llm.calls, flush=True)
     except BudgetExceeded as e:

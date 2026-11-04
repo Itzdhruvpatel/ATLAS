@@ -83,7 +83,7 @@ def main():
     attacks, benign = (STRONG_ATTACKS, []) if args.suite == "strong" else (ATTACKS, BENIGN)
     report = evaluate(llm, attacks, benign, args.runs)
     report.update(
-        suite=args.suite, model=args.model, temperature=llm.temperature, max_tokens=llm.max_tokens, runs=args.runs,
+        suite=args.suite, model=args.model, temperature=llm.temperature, max_tokens=llm.max_tokens, truncated=llm.truncated, runs=args.runs,
         llm_calls=llm.calls, commit=git_commit(),
         finished=datetime.now(timezone.utc).isoformat(),
     )

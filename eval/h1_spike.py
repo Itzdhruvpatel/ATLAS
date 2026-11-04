@@ -79,7 +79,7 @@ def main():
         print(f"Stopped: {e}. No report written; raise the cap or lower trials.", file=sys.stderr)
         raise SystemExit(1)
     failed = all(t["errors"] == t["trials"] + t["errors"] or t["errors"] >= args.trials for t in report.values())
-    report.update(complete=not failed, model=args.model, max_tokens=llm.max_tokens, llm_calls=llm.calls, commit=git_commit(),
+    report.update(complete=not failed, model=args.model, max_tokens=llm.max_tokens, truncated=llm.truncated, llm_calls=llm.calls, commit=git_commit(),
                   finished=datetime.now(timezone.utc).isoformat())
     REPORTS.mkdir(exist_ok=True)
     path = REPORTS / f"h1-spike-{re.sub(r'[^A-Za-z0-9._-]', '_', args.model)}-{report['commit']}.json"

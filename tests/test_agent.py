@@ -65,7 +65,7 @@ def test_llm_client_returns_message_from_response():
     def handler(request):
         assert request.headers["authorization"] == "Bearer k"
         assert str(request.url) == "https://x.test/v1/chat/completions"
-        assert json.loads(request.content)["max_tokens"] == 500
+        assert json.loads(request.content)["max_tokens"] == 3000
         return httpx.Response(200, json={"choices": [{"message": {"role": "assistant", "content": "hi"}}]})
 
     llm = OpenAICompatLLM("https://x.test/v1", "k", "m", max_calls=1, transport=httpx.MockTransport(handler))
@@ -89,3 +89,10 @@ def test_llm_client_retries_rate_limits_without_extra_budget():
                           transport=httpx.MockTransport(lambda request: replies.pop(0)))
     assert llm([], [])["content"] == "ok"
     assert llm.calls == 1
+
+
+def test_llm_client_counts_cut_off_replies():
+    reply = {"choices": [{"message": {"content": "<think>unfinished"}, "finish_reason": "length"}]}
+    llm = OpenAICompatLLM("https://x.test/v1", "k", "m", max_calls=1, transport=httpx.MockTransport(lambda request: httpx.Response(200, json=reply)))
+    llm([], [])
+    assert llm.truncated == 1
