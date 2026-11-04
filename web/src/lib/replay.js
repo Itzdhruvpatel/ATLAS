@@ -53,7 +53,7 @@ function short(text, n = 180) {
 
 export function describe(e) {
   switch (e?.stage) {
-    case "tool_result": return { head: `Agent read from ${e.tool}`, body: e.trust === "T3" ? `Untrusted text entered the agent's context: ${short(e.text)}` : short(e.text) };
+    case "tool_result": return { head: e.trust === "T3" ? `Agent read from ${e.tool}` : `${e.tool} returned`, body: e.trust === "T3" ? `Untrusted text entered the agent's context: ${short(e.text)}` : short(e.text) };
     case "ingest": return { head: "Firewall cleaned the text", body: `Found ${e.signals.join(", ")}. Removed: ${short(e.removed.join(" "))}` };
     case "llm": return { head: "Model replied", body: e.calls.length ? `It wants to call ${e.calls.join(", ")}.` : short(e.content) || "It sent an empty reply." };
     case "allow": return { head: `Firewall allowed ${e.tool}`, body: short(e.arguments) };
@@ -65,6 +65,8 @@ export function describe(e) {
     default: return { head: "Waiting", body: "" };
   }
 }
+
+const label = (tool) => String(tool).replace(/_/g, " ");
 
 export function graph(events, upTo) {
   const nodes = [
@@ -79,12 +81,14 @@ export function graph(events, upTo) {
     else if (state === "blocked") existing.state = "blocked";
   };
   events.slice(0, upTo + 1).forEach((e) => {
-    if (e.stage === "tool_result") {
-      add(`in:${e.tool}`, e.tool, e.trust === "T3" ? "untrusted" : "internal");
-      link(`in:${e.tool}`, "agent", e.trust === "T3" ? "tainted" : "ok");
+    // Only untrusted text gets an input node. Other results just return from the tool already shown.
+    if (e.stage === "tool_result" && e.trust === "T3") {
+      add(`in:${e.tool}`, label(e.tool), "untrusted");
+      link(`in:${e.tool}`, "agent", "tainted");
     }
-    if (e.stage === "allow") { add(`out:${e.tool}`, e.tool, "tool"); link("agent", `out:${e.tool}`, "ok"); }
-    if (e.stage === "block") { add(`out:${e.tool}`, e.tool, "tool"); link("agent", `out:${e.tool}`, "blocked"); }
+    // Reading a document only brings text in, so it isn't drawn as an outgoing action as well.
+    if (e.stage === "allow" && e.tool !== "read_document") { add(`out:${e.tool}`, label(e.tool), "tool"); link("agent", `out:${e.tool}`, "ok"); }
+    if (e.stage === "block") { add(`out:${e.tool}`, label(e.tool), "tool"); link("agent", `out:${e.tool}`, "blocked"); }
   });
   return { nodes, edges, active: events[upTo]?.stage };
 }

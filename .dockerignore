@@ -1,0 +1,9 @@
+.git
+.env
+.venv
+**/node_modules
+web/dist
+*.db
+drafts
+docs
+tests

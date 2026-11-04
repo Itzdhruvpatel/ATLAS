@@ -8,12 +8,13 @@ function labelSprite(text) {
   const context = canvas.getContext("2d");
   const font = "700 30px B612, sans-serif";
   context.font = font;
-  canvas.width = Math.ceil(context.measureText(text).width) + 12;
-  canvas.height = 42;
+  canvas.width = Math.ceil(context.measureText(text).width) + 48;
+  canvas.height = 56;
   context.font = font;
   context.fillStyle = "#f3f6f2";
+  context.textAlign = "center";
   context.textBaseline = "middle";
-  context.fillText(text, 6, 21);
+  context.fillText(text, canvas.width / 2, canvas.height / 2);
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false }));

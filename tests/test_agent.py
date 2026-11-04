@@ -78,3 +78,11 @@ def test_api_key_prefers_environment_then_file(tmp_path, monkeypatch):
     assert api_key(env_file) == "from-file"
     monkeypatch.setenv("ATLAS_LLM_API_KEY", "from-env")
     assert api_key(env_file) == "from-env"
+
+
+def test_llm_client_retries_rate_limits_without_extra_budget():
+    replies = [httpx.Response(429), httpx.Response(200, json={"choices": [{"message": {"content": "ok"}}]})]
+    llm = OpenAICompatLLM("https://x.test/v1", "k", "m", max_calls=1, retry_wait=0,
+                          transport=httpx.MockTransport(lambda request: replies.pop(0)))
+    assert llm([], [])["content"] == "ok"
+    assert llm.calls == 1

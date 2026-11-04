@@ -1,4 +1,5 @@
 import os
+import time
 from pathlib import Path
 
 import httpx
@@ -23,11 +24,12 @@ def api_key(env_file=ENV_FILE):
 
 
 class OpenAICompatLLM:
-    def __init__(self, base_url, api_key, model, max_calls, temperature=0.0, transport=None, timeout=60):
+    def __init__(self, base_url, api_key, model, max_calls, temperature=0.0, transport=None, timeout=60, retry_wait=20):
         self.model = model
         self.max_calls = max_calls
         self.temperature = temperature
         self.calls = 0
+        self.retry_wait = retry_wait
         self.client = httpx.Client(
             base_url=base_url,
             headers={"Authorization": f"Bearer {api_key}"},
@@ -39,11 +41,12 @@ class OpenAICompatLLM:
         if self.calls >= self.max_calls:
             raise BudgetExceeded(f"hit cap of {self.max_calls} LLM calls")
         self.calls += 1
-        response = self.client.post("/chat/completions", json={
-            "model": self.model,
-            "messages": messages,
-            "tools": tools,
-            "temperature": self.temperature,
-        })
+        body = {"model": self.model, "messages": messages, "tools": tools, "temperature": self.temperature}
+        for attempt in range(3):
+            response = self.client.post("/chat/completions", json=body)
+            if response.status_code != 429 or attempt == 2:
+                break
+            # Free tiers rate limit per minute, so a short wait usually clears it.
+            time.sleep(self.retry_wait * (attempt + 1))
         response.raise_for_status()
         return response.json()["choices"][0]["message"]

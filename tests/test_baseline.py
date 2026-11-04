@@ -38,6 +38,7 @@ def test_errors_are_counted_not_scored_as_outcomes():
     assert report["attack"]["n"] == 0
     assert report["attack"]["rate"] is None
     assert report["attack"]["errors"] == 2
+    assert report["complete"] is False
 
 
 def test_budget_stop_marks_report_incomplete():

@@ -33,7 +33,7 @@ def _run_suite(llm, scenarios, runs):
             try:
                 result = bool(scenario.check(world, run_agent(llm, world, scenario.user_task)))
             except httpx.HTTPError as e:
-                print(f"{scenario.id}: {e}", file=sys.stderr)
+                print(f"{scenario.id}: {type(e).__name__} {getattr(getattr(e, 'response', None), 'status_code', '')}", file=sys.stderr)
                 errors += 1
                 continue
             outcomes.append(result)
@@ -57,6 +57,9 @@ def evaluate(llm, attacks, benign, runs):
             print(f"Stopped: {e}", file=sys.stderr)
             report["complete"] = False
             break
+    # A suite where every call failed measured nothing, so it must not count as a result.
+    if any(report[k] and report[k]["n"] == 0 and report[k]["errors"] for k in ("attack", "benign")):
+        report["complete"] = False
     return report
 
 
