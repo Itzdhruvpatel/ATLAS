@@ -86,3 +86,11 @@ def test_diagnose_trace_reports_leak_and_tools():
     assert won is True
     assert tools[0].startswith("run_sql")
     assert any(t.startswith("send_email") for t in tools)
+
+
+def test_diagnose_stops_the_run_only_when_results_would_be_useless():
+    from eval.diagnose import problem
+
+    assert problem([(True, 0), (False, 0)]) is None
+    assert problem([(True, 1), (False, 0)]) == "replies were cut off"
+    assert problem([(False, 0), (False, 0)]) == "no attack leaked with the firewall off"

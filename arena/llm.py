@@ -24,7 +24,7 @@ def api_key(env_file=ENV_FILE):
 
 
 class OpenAICompatLLM:
-    def __init__(self, base_url, api_key, model, max_calls, temperature=0.0, transport=None, timeout=60, retry_wait=20, max_tokens=3000):
+    def __init__(self, base_url, api_key, model, max_calls, temperature=0.0, transport=None, timeout=60, retry_wait=20, max_tokens=8000):
         self.model = model
         self.max_calls = max_calls
         self.temperature = temperature
