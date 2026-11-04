@@ -76,3 +76,13 @@ def test_scoreboard_skips_setups_where_every_call_failed(tmp_path):
     ]}
     (tmp_path / "ablation-x.json").write_text(json.dumps(report))
     assert [r["config"] for r in build(tmp_path)["runs"]] == ["real"]
+
+
+def test_diagnose_trace_reports_leak_and_tools():
+    from eval.diagnose import trace
+    from eval.scenarios import STRONG_ATTACKS
+
+    won, tools, _ = trace(EvilLLM(), STRONG_ATTACKS[0])
+    assert won is True
+    assert tools[0].startswith("run_sql")
+    assert any(t.startswith("send_email") for t in tools)
