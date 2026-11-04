@@ -54,3 +54,14 @@ def test_lab_runs_every_layer_combination_for_real():
     assert lab["results"]["trusted:11100"]["won"]
     assert not lab["results"]["trusted:11101"]["won"]
     assert lab["results"]["dump:11110"]["blocked_by"] == "canary"
+
+
+def test_arena_check_plays_every_level_through_the_api():
+    from eval.arena_check import LEVELS, check
+    from tests.test_gateway_arena import PAYLOAD, Hijackable
+
+    rows = check(Hijackable(), "test-model", document=PAYLOAD)
+    assert [r["level"] for r in rows] == list(LEVELS)
+    assert all(r["status"] == 200 for r in rows)
+    assert rows[0]["won"] is True
+    assert rows[2]["won"] is False
