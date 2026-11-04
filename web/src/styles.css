@@ -85,7 +85,7 @@ button, input, textarea, select { font: inherit; }
 .lead.mid { margin-inline: auto; }
 
 /* hero */
-.hero { height: 100svh; min-height: 38rem; }
+.hero { min-height: max(100svh, 38rem); }
 .hero-nav { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 24px var(--gutter) 0; }
 .hero-brand { font: 700 1.6rem/1 var(--display); letter-spacing: -.01em; text-decoration: none; }
 .hero-links { display: flex; gap: 34px; }
@@ -299,7 +299,7 @@ tr:last-child td { border-bottom: 0; }
 .hero-tag { justify-content: center; }
 .hero-lede { margin-inline: auto; max-width: 34rem; }
 .hero-actions { justify-content: center; }
-.session-card { position: absolute; top: auto; left: 0; right: 0; margin-inline: auto; bottom: 104px; width: min(60rem, calc(100% - 2 * var(--gutter))); display: grid; grid-template-columns: minmax(15rem, 1fr) minmax(0, 1.4fr); gap: 2px 28px; align-items: center; padding: 14px 20px; border-radius: 20px; }
+.session-card { position: relative; top: auto; right: auto; margin: auto auto 104px; width: min(60rem, calc(100% - 2 * var(--gutter))); display: grid; grid-template-columns: minmax(15rem, 1fr) minmax(0, 1.4fr); gap: 2px 28px; align-items: center; padding: 14px 20px; border-radius: 20px; }
 .session-top { grid-row: 1 / span 2; }
 .session-line { min-height: 0; margin-top: 0; }
 .session-card .annun { margin-top: 6px; }
@@ -362,6 +362,11 @@ tr:last-child td { border-bottom: 0; }
 @media (max-width: 1024px) { .hero .chapter-body { height: auto; } }
 /* the instrument bar anchors to the hero itself, not to the text column */
 .hero .chapter-body { position: static; height: auto; flex: 1; }
+/* The card sits below the buttons and the hero grows on short screens, so they can't overlap. */
+@media (min-width: 1025px) and (min-height: 521px) {
+  .hero .chapter-body { display: flex; flex-direction: column; }
+  .hero-copy { padding-bottom: 28px; }
+}
 .hero-nav, .hero-copy { position: relative; }
 
 .hero .chapter-shade { background: radial-gradient(ellipse 66% 50% at 50% 30%, rgb(30 12 24 / .42), rgb(30 12 24 / 0) 80%), linear-gradient(180deg, rgb(20 12 30 / .3), transparent 22%); }
@@ -404,7 +409,7 @@ tr:last-child td { border-bottom: 0; }
   .menubar { height: 28px; }
   .window { max-width: none; height: calc(100dvh - 8.6rem); }
   .dock-wrap { zoom: 1.2; }
-  .session-card { bottom: 132px; }
+  .session-card { margin-bottom: 132px; }
   .chapter-wide { max-width: 86%; }
   .chapter-shade.right + .chapter-body .right-half { width: 44%; }
   .page { max-width: 90rem; }
@@ -413,12 +418,12 @@ tr:last-child td { border-bottom: 0; }
   html { font-size: 26px; }
   .mac .pane, .mac .sidebar, .menubar, .titlebar { zoom: 1.6; }
   .dock-wrap { zoom: 1.6; }
-  .session-card { bottom: 172px; }
+  .session-card { margin-bottom: 172px; }
   .window { height: calc(100dvh - 9rem); }
 }
 @media (min-width: 3840px) {
   html { font-size: 38px; }
   .mac .pane, .mac .sidebar, .menubar, .titlebar { zoom: 2.3; }
   .dock-wrap { zoom: 2.3; }
-  .session-card { bottom: 240px; }
+  .session-card { margin-bottom: 240px; }
 }
