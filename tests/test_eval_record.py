@@ -65,3 +65,14 @@ def test_arena_check_plays_every_level_through_the_api():
     assert all(r["status"] == 200 for r in rows)
     assert rows[0]["won"] is True
     assert rows[2]["won"] is False
+
+
+def test_scoreboard_skips_setups_where_every_call_failed(tmp_path):
+    empty = {"rate": None, "ci95": [None, None], "n": 0, "errors": 6}
+    good = {"rate": 0.5, "ci95": [0, 1], "n": 2, "errors": 0}
+    report = {"model": "m", "commit": "c", "rows": [
+        {"config": "dead", "attack": empty, "benign": empty},
+        {"config": "real", "attack": good, "benign": good},
+    ]}
+    (tmp_path / "ablation-x.json").write_text(json.dumps(report))
+    assert [r["config"] for r in build(tmp_path)["runs"]] == ["real"]

@@ -79,7 +79,8 @@ def main():
             print(row["config"], "attack", row["attack"]["rate"], "benign", row["benign"]["rate"], "calls", llm.calls, flush=True)
     except BudgetExceeded as e:
         raise SystemExit(f"Stopped: {e}. Finished configs are saved in {path}.")
-    report["complete"] = True
+    # A setup where every call failed measured nothing, so the run must not count as complete.
+    report["complete"] = all(row[k]["n"] or not row[k]["errors"] for row in report["rows"] for k in ("attack", "benign"))
     path.write_text(json.dumps(report, indent=2), encoding="utf-8")
     print(path)
 

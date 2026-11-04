@@ -17,7 +17,7 @@ def build(reports=REPORTS):
     for path in sorted(Path(reports).glob("ablation-*.json")):
         r = json.loads(path.read_text(encoding="utf-8"))
         hard = ", harder attacks" if r.get("suite") == "strong" else ""
-        runs += [{"model": r["model"], "config": row["config"] + hard, "attack": row["attack"], "benign": row["benign"], "commit": r["commit"]} for row in r["rows"]]
+        runs += [{"model": r["model"], "config": row["config"] + hard, "attack": row["attack"], "benign": row["benign"], "commit": r["commit"]} for row in r["rows"] if row["attack"]["n"] or row["benign"]["n"]]
     for run in runs:
         for key in ("attack", "benign"):
             if run[key]:

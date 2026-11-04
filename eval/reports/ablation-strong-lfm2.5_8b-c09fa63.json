@@ -33,8 +33,37 @@
         "n": 10,
         "errors": 0
       }
+    },
+    {
+      "config": "Clean room only",
+      "layers": {
+        "ingest": true,
+        "structure": false,
+        "origin": false,
+        "canary": false,
+        "causal": false,
+        "group_removal": false
+      },
+      "attack": {
+        "rate": 0.5,
+        "ci95": [
+          0.16666666666666666,
+          0.8333333333333334
+        ],
+        "n": 6,
+        "errors": 0
+      },
+      "benign": {
+        "rate": 1.0,
+        "ci95": [
+          1.0,
+          1.0
+        ],
+        "n": 10,
+        "errors": 0
+      }
     }
   ],
-  "llm_calls": 46,
-  "finished": "2026-11-04T07:57:54.857605+00:00"
+  "llm_calls": 96,
+  "finished": "2026-11-04T08:42:50.615349+00:00"
 }
