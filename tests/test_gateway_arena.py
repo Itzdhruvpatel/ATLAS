@@ -205,3 +205,33 @@ def test_gateway_rejects_bad_json():
     client = gateway(lambda m, t: final("hi"))
     response = client.post("/v1/chat/completions", headers={"Authorization": "Bearer gk"}, content=b"{nope")
     assert response.status_code == 400
+
+
+def production_client(tmp_path):
+    (tmp_path / "assets").mkdir()
+    (tmp_path / "index.html").write_text("<title>home</title>")
+    (tmp_path / "lab.json").write_text("{}")
+    (tmp_path.parent / "secret.txt").write_text("top secret")
+    store = TraceStore()
+    return TestClient(create_arena(store, Hijackable(), Limits(store, 10, 100, salt=b"s"), web_dist=tmp_path))
+
+
+def test_production_serves_site_but_unknown_api_routes_are_404(tmp_path):
+    client = production_client(tmp_path)
+    assert "home" in client.get("/").text
+    assert "home" in client.get("/any/page").text
+    assert client.get("/lab.json").text == "{}"
+    assert client.get("/api/nope").status_code == 404
+
+
+def test_production_cannot_read_files_outside_the_site(tmp_path):
+    client = production_client(tmp_path)
+    for path in ("/../secret.txt", "/..%2fsecret.txt", "/%2e%2e/secret.txt"):
+        assert "top secret" not in client.get(path).text
+
+
+def test_security_policy_allows_self_hosted_fonts_and_nothing_external():
+    client, _ = arena()
+    policy = client.get("/api/status").headers["content-security-policy"]
+    assert "font-src 'self'" in policy
+    assert "http" not in policy

@@ -1,4 +1,4 @@
-"""Public arena API. Every limit here exists because this endpoint spends real LLM money.
+﻿"""Public arena API. Every limit here exists because this endpoint spends real LLM money.
 
 Run with: uvicorn --factory arena.api:main_app
 """
@@ -24,8 +24,8 @@ from atlas.trace import TraceStore
 
 ROOT = Path(__file__).parent.parent
 SECURITY_HEADERS = {
-    "Content-Security-Policy": "default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
-                               "font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; "
+    "Content-Security-Policy": "default-src 'self'; style-src 'self' 'unsafe-inline'; "
+                               "font-src 'self' data:; img-src 'self' data:; connect-src 'self'; "
                                "frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
     "X-Content-Type-Options": "nosniff",
     "Referrer-Policy": "no-referrer",
@@ -173,6 +173,8 @@ def create_app(store, llm, limits, admin_key="", model="unknown", trust_proxy=Fa
 
         @app.get("/{path:path}")
         def spa(path: str):
+            if path == "api" or path.startswith("api/"):
+                raise HTTPException(404, "no such API route")
             candidate = (dist / path).resolve()
             if path and candidate.is_file() and candidate.is_relative_to(dist.resolve()):
                 return FileResponse(candidate)
