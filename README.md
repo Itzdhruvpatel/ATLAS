@@ -52,13 +52,17 @@ What this shows, and what it doesn't:
 - With structure and origin checks on, no attack leaked the secret in this small test.
 - The one normal task still blocked is replying to an address found inside a document. It looks identical to a real attack, so it stays blocked until an ask-a-human step exists.
 - Causal replay added no measured protection beyond structure and origin here. It only runs when a destination wasn't chosen by the user or operator.
-- These samples are small, one model, and runs repeat closely because temperature is 0, so treat them as early signals. An attacker who adapts to the firewall hasn't been tested yet.
+- These samples are small, one model, and runs repeat closely because temperature is 0, so treat them as early signals. An attacker who adapts to the firewall has had only a 3-round trial, which never reached the firewall.
 
 The arena also ran on this real model through its API, for all 5 levels. The arena's public demo uses a clearly labelled scripted model, so it runs without an API key.
 
 The flight recordings on the site are real runs on this model. With the firewall off, the poisoned action items sent the fake key to the attacker. With it on, the origin check blocked that email. In the poisoned runbook the model emailed the attacker with the firewall off, but those emails didn't contain the key, so that run doesn't count as a leak.
 
-An agent also ran through the gateway's HTTP API: the attack sent no email and a normal task passed. That was one run of each.
+The remaining parts also ran once each on this model:
+
+- **Gateway:** an agent used only the HTTP API. The attack sent no email and a normal task passed.
+- **PAIR attacker:** it tried 3 documents against level 3 and none leaked the secret. The firewall blocked nothing in these rounds because the model never tried to act on them, so this tests the model's resistance, not the firewall.
+- **Immune System:** it drafted a rule denying `evil.test`, and no normal task was lost in a sample of 2. All 4 attack variants failed, but the sample attack may have failed without the new rule too, so this shows the pipeline works, not that the rule added protection.
 
 ### Paper question: first result
 
