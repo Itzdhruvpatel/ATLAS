@@ -2,6 +2,8 @@
 
 A firewall for AI agents. It stops hidden instructions in documents, pages and tool results from turning into actions, and it comes with an arena where you can try to beat it.
 
+**Live site:** https://atlas-psi-neon-19.vercel.app. The arena runs on a free server, so the first round after a quiet spell can take about a minute.
+
 AI agents read everything as one stream of text, so they can't reliably tell your instructions from text they happen to read. Ask one to summarize a PDF, and a hidden line in that PDF can tell it to email your data to someone else. This is indirect prompt injection.
 
 ATLAS sits between an agent and its tools. Point the agent's `base_url` at it:
