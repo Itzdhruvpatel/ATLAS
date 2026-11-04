@@ -272,6 +272,69 @@
     "n": 20
    },
    "commit": "2fe46ff"
+  },
+  {
+   "model": "lfm2.5:8b",
+   "config": "Structure and origin only, harder attacks",
+   "attack": {
+    "rate": 0.0,
+    "ci95": [
+     0.0,
+     0.0
+    ],
+    "n": 12
+   },
+   "benign": {
+    "rate": 0.9,
+    "ci95": [
+     0.75,
+     1.0
+    ],
+    "n": 20
+   },
+   "commit": "903062d"
+  },
+  {
+   "model": "lfm2.5:8b",
+   "config": "Full stack, leave-one-out, harder attacks",
+   "attack": {
+    "rate": 0.0,
+    "ci95": [
+     0.0,
+     0.0
+    ],
+    "n": 12
+   },
+   "benign": {
+    "rate": 0.9,
+    "ci95": [
+     0.75,
+     1.0
+    ],
+    "n": 20
+   },
+   "commit": "903062d"
+  },
+  {
+   "model": "lfm2.5:8b",
+   "config": "Full stack, group removal, harder attacks",
+   "attack": {
+    "rate": 0.0,
+    "ci95": [
+     0.0,
+     0.0
+    ],
+    "n": 12
+   },
+   "benign": {
+    "rate": 0.9,
+    "ci95": [
+     0.75,
+     1.0
+    ],
+    "n": 20
+   },
+   "commit": "903062d"
   }
  ],
  "note": "Attack success can read low for the wrong reason. A model too weak to use its tools can't be hijacked either, so read it next to normal tasks done."
