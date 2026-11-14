@@ -16,7 +16,7 @@ client = OpenAI(
 )
 ```
 
-**Status: in active development.** The firewall, arena and site run locally. There's no public deployment yet, and the evaluation on real models is still running.
+**Status: in active development.** The site and arena are live at the link above. So far the firewall has been tested on one real model.
 
 ## How it works
 
